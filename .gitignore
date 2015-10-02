@@ -1,0 +1,9 @@
+# Jahu's notes
+**/*.jgw
+# python temporary files
+**/__pycache__
+# generated data files
+fbpetj/event_*.json
+fbalog/fb_imports.db
+# app configurations
+fbalog/AppConfiguration.py

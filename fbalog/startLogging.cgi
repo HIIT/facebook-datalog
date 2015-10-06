@@ -38,7 +38,7 @@ elif "code" in form:
     # proceed by sending access token request
     response = None
     try:
-        response = urllib.request.urlopen("https://graph.facebook.com/v2.4/oauth/access_token?client_id="+APP_ID+"&redirect_uri="+REDIRECT_URI+"&client_secret="+APP_SECRET+"&code="+code)
+        response = urllib.request.urlopen("https://graph.facebook.com/v2.4/oauth/access_token?client_id="+APP_ID+"&redirect_uri="+REDIRECT_URI+"&response_type=code&scope=user_likes,user_posts,user_status&client_secret="+APP_SECRET+"&code="+code)
     except:
         loginSuccessful = False
         error = "Unknown error when starting logging. Please try again."

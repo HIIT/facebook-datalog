@@ -14,7 +14,7 @@ To run fbalog, you need to create a file AppConfiguration.py. Put the following 
 LOGPATH = "path/where/you/want/errors/to/be/logged"
 APPSECRET = "app secret you get from facebook"
 APPID = "app id you get from facebook"
-REDIRECT_URI = "https://url.to/start_logging.cgi&response_type=code&scope=user_likes,user_posts,user_status,read_stream,user_friends"
+REDIRECT_URI = "https://url.to/start_logging.cgi"
 
 
 

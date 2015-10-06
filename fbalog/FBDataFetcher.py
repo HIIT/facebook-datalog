@@ -12,6 +12,8 @@ import FakeResponse
 # DOJO: requestCount != 1 UNTESTED
 # DOJO: when API returns X users attending, FB page says X+1 O.o
 # DOJO: page fetch does not work as expected, test with several pages
+# DOJO: optimize to use fields to get likes, comments with same requests -> less rate limit usage
+# DOJO: remove unused permission for facebook review
 
 class FBDataFetcher:
     def __init__(self):
@@ -73,7 +75,10 @@ class FBDataFetcher:
 
     def _shouldFetch(self, key):
         if key not in self._options:
-            return self._SHOULD_FETCH_DEFAULT
+            if "default" in self._options:
+                return self._options["default"]
+            else:
+                return self._SHOULD_FETCH_DEFAULT
         else:
             return self._options[key]
         
@@ -131,6 +136,16 @@ class FBDataFetcher:
                 if set(["id"]).issubset(set(userData.keys())):
                     likes.append({"id": userData["id"]})
         return likes
+    
+    # parse friends, return an array of maps such as {"id": "fb_user_id","name": "name"}
+    def _parseFriends(self, fbResponseData):
+        friends = []
+        parsed = json.loads(fbResponseData)
+        if "data" in parsed.keys():
+            for userData in parsed["data"]:
+                if set(["id"."name"]).issubset(set(userData.keys())):
+                    friends.append({"id": userData["id"], "name": userData["name"]})
+        return friends
 
 #-#########################
 # PRIVATE FETCH FUNCTIONS #
@@ -154,6 +169,16 @@ class FBDataFetcher:
         participation = self._fetchParticipationOfType("attending") + self._fetchParticipationOfType("maybe") + self._fetchParticipationOfType("declined") + self._fetchParticipationOfType("noreply")
         return participation
 
+    def _fetchFriends(self, itemId):
+        friends = []
+        nextUrl = self._API_URL+itemId+"/likes?format=json&access_token="+self._accessToken+"&limit="+str(self._PAGINATION_LIMIT)
+        while nextUrl != None:
+            response = self._makeAPIRequest(nextUrl)
+            responseData = response.read().decode("utf-8")
+            friends += self._parseFriends(responseData)
+            nextUrl = self._parsePaginationNextUrl(responseData)
+        return friends
+    
     def _fetchLikes(self, itemId):
         likes = []
         nextUrl = self._API_URL+itemId+"/likes?format=json&access_token="+self._accessToken+"&limit="+str(self._PAGINATION_LIMIT)
@@ -191,9 +216,13 @@ class FBDataFetcher:
             nextUrl = self._parsePaginationNextUrl(responseData)
         return comments
 
-    def _fetchItem(self, itemId):
-        # get item "basic" data (create_time, id and so forth)
-        nextUrl = self._API_URL+itemId+"?format=json&access_token="+self._accessToken
+    def _fetchItem(self, itemId, fields=[]):
+        # if fields are not specified, use whatever facebook gives us
+        if len(fields) != 0:
+            fields = "fields="+",".join(fields)
+        else:
+            fields = ""
+        nextUrl = self._API_URL+itemId+"?format=json&access_token="+self._accessToken+"&"+fields
         response = self._makeAPIRequest(nextUrl)
         parsed = json.loads(response.read().decode("utf-8"))
         item = parsed.copy()
@@ -278,6 +307,19 @@ class FBDataFetcher:
         self._resetTemporaryData()
         # return data
         return userId
+    
+    def fetchUserActivity(self, userId, accessToken, options={}):
+        # set temporary data
+        self._setTemporaryData(accessToken, userId, options)
+        
+        # fetch own posts
+        activity = []
+        feed = self._fetchItem(userId+"/posts", ["created_time","from","likes","link","message","shares","type","updated_time"])
+        
+        # reset temporary data
+        self._resetTemporaryData()
+        # return data
+        return feed
 
 #-##################
 # end of class def #

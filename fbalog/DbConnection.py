@@ -61,3 +61,12 @@ class DbConnection:
         self._cursor.execute("""CREATE TABLE IF NOT EXISTS access_tokens (user_id TEXT UNIQUE ON CONFLICT REPLACE, access_token TEXT);""")
         
         self._finishOperation()
+    
+    def insertIntoUserActivity(self, rows):
+        self._startOperation()
+        
+        # push each row separately
+        for r in rows:
+            self._cursor.execute("""INSERT INTO user_activity VALUES (?, ?, ?, ?, ?, ?);""", tuple(r))
+        
+        self._finishOperation()

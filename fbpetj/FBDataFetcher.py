@@ -12,6 +12,8 @@ from FakeResponse import *
 # DOJO: requestCount != 1 UNTESTED
 # DOJO: when API returns X users attending, FB page says X+1 O.o
 # DOJO: page fetch does not work as expected, test with several pages
+# DOJO: optimize to use fields to get likes, comments with same requests -> less rate limit usage
+# DOJO: remove unused permission for facebook review
 
 class FBDataFetcher:
     def __init__(self):
@@ -20,14 +22,15 @@ class FBDataFetcher:
         self._HTTP_ERROR_RETRIES = 3
         self._RATE_LIMIT_COUNT = 600
         self._RATE_LIMIT_SECONDS = 600
+        self._SHOULD_FETCH_DEFAULT = True # default value to use if a key is not found in self._options when calling self._shouldFetch()
 
         self._rateLimitCounters = {} # key, val as fb user id, rate limit counter as str, int
         self._rateLimitTimes = {} # key, val as fb user id, rate limit counter start time (unix epoch) as str, int
         self._accessToken = None # when set, should use fb access tokens (str)
-
-##########################
+        
+#-########################
 # PRIVATE UTIL FUNCTIONS #
-##########################
+#-########################
 
     # returns urllib request response object
     def _makeAPIRequest(self, url, data=None, requestCount=1):
@@ -60,9 +63,28 @@ class FBDataFetcher:
         print("Warning: request to "+url+" failed. Returning an empty response")
         return FakeResponse()
 
-#############################
+    def _setTemporaryData(self, accessToken, currentId=None, options={}):
+        self._accessToken = accessToken
+        self._currentId = currentId
+        self._options = options
+    
+    def _resetTemporaryData(self):
+        self._accessToken = None
+        self._currentId = None
+        self._options = None
+
+    def _shouldFetch(self, key):
+        if key not in self._options:
+            if "default" in self._options:
+                return self._options["default"]
+            else:
+                return self._SHOULD_FETCH_DEFAULT
+        else:
+            return self._options[key]
+        
+#-###########################
 # PRIVATE PARSING FUNCTIONS #
-#############################
+#-###########################
 
     # returns next pagination url as str, or None if such url does not exist
     def _parsePaginationNextUrl(self, fbResponseData):
@@ -90,7 +112,7 @@ class FBDataFetcher:
         parsed = json.loads(fbResponseData)
         if "data" in parsed.keys():
             for userData in parsed["data"]:
-                if set(["name","rsvp_status","id"]).issubset(set(userData.keys())):
+                if set(["rsvp_status","id"]).issubset(set(userData.keys())):
                     participants.append(userData)
         return participants
 
@@ -115,9 +137,9 @@ class FBDataFetcher:
                     likes.append({"id": userData["id"]})
         return likes
 
-###########################
+#-#########################
 # PRIVATE FETCH FUNCTIONS #
-###########################
+#-#########################
 
     # participationType may be one of the following: "attending" "maybe" "declined" "noreply"
     def _fetchParticipationOfType(self, participationType):
@@ -125,7 +147,7 @@ class FBDataFetcher:
             print("ERROR: alert the programmers! Trying to use "+participationType+" as participation type! No participation data for this type will be returned!")
             return []
         participation = []
-        nextUrl = self._API_URL+self._currentId+"/"+participationType+"?format=json&limit="+str(self._PAGINATION_LIMIT)+"&access_token="+self._accessToken
+        nextUrl = self._API_URL+self._currentId+"/"+participationType+"?fields=rsvp_status,id&format=json&limit="+str(self._PAGINATION_LIMIT)+"&access_token="+self._accessToken
         while nextUrl != None:
             response = self._makeAPIRequest(nextUrl)
             responseData = response.read().decode("utf-8")
@@ -139,7 +161,7 @@ class FBDataFetcher:
 
     def _fetchLikes(self, itemId):
         likes = []
-        nextUrl = self._API_URL+itemId+"/likes?format=json&access_token="+self._accessToken+"&limit="+str(self._PAGINATION_LIMIT)
+        nextUrl = self._API_URL+itemId+"/likes?fields=id&format=json&access_token="+self._accessToken+"&limit="+str(self._PAGINATION_LIMIT)
         while nextUrl != None:
             response = self._makeAPIRequest(nextUrl)
             responseData = response.read().decode("utf-8")
@@ -149,20 +171,20 @@ class FBDataFetcher:
 
     def _fetchComment(self, commentId):
         # get comment data (create_time, message, id, from(name, id))
-        nextUrl = self._API_URL+commentId+"?format=json&access_token="+self._accessToken
+        nextUrl = self._API_URL+commentId+"?fields=created_time,id,from,message&format=json&access_token="+self._accessToken
         response = self._makeAPIRequest(nextUrl)
         responseData = response.read().decode("utf-8")
         comment = self._parseComment(responseData)
         if comment == None:
             return None
         # get comment likes
-        if self._shouldFetchLikes:
+        if self._shouldFetch("likes"):
             comment["likes"] = self._fetchLikes(commentId)
         return comment
 
     def _fetchComments(self, itemId):
         comments = []
-        nextUrl = self._API_URL+itemId+"/comments?format=json&access_token="+self._accessToken
+        nextUrl = self._API_URL+itemId+"/comments?fields=id&format=json&access_token="+self._accessToken
         while nextUrl != None:
             response = self._makeAPIRequest(nextUrl)
             responseData = response.read().decode("utf-8")
@@ -174,24 +196,28 @@ class FBDataFetcher:
             nextUrl = self._parsePaginationNextUrl(responseData)
         return comments
 
-    def _fetchItem(self, itemId):
-        # get item "basic" data (create_time, id and so forth)
-        nextUrl = self._API_URL+itemId+"?format=json&access_token="+self._accessToken
+    def _fetchItem(self, itemId, fields=[]):
+        # if fields are not specified, use whatever facebook gives us
+        if len(fields) != 0:
+            fields = "fields="+",".join(fields)
+        else:
+            fields = ""
+        nextUrl = self._API_URL+itemId+"?fields=id,created_time,link,caption,description,story,message,name,type,picture,shares&format=json&access_token="+self._accessToken+"&"+fields
         response = self._makeAPIRequest(nextUrl)
         parsed = json.loads(response.read().decode("utf-8"))
         item = parsed.copy()
         # get likes
-        if self._shouldFetchLikes:
+        if self._shouldFetch("likes"):
             item["likes"] = self._fetchLikes(itemId)
         # get comments
-        if self._shouldFetchComments:
+        if self._shouldFetch("comments"):
             item["comments"] = self._fetchComments(itemId)
         # return fetched item
         return item
 
     def _fetchFeed(self):
         feed = []
-        nextUrl = self._API_URL+self._currentId+"/feed?format=json&limit="+str(self._PAGINATION_LIMIT)+"&access_token="+self._accessToken
+        nextUrl = self._API_URL+self._currentId+"/feed?fields=id&format=json&limit="+str(self._PAGINATION_LIMIT)+"&access_token="+self._accessToken
         while nextUrl != None:
             response = self._makeAPIRequest(nextUrl)
             responseData = response.read().decode("utf-8")
@@ -201,89 +227,94 @@ class FBDataFetcher:
             nextUrl = self._parsePaginationNextUrl(responseData)
         return feed
 
-####################
+#-##################
 # PUBLIC FUNCTIONS #
-####################
+#-##################
 
-    def fetchEvent(self, eventId, accessToken, shouldFetchParticipation=True, shouldFetchFeed=True, shouldFetchComments=True, shouldFetchLikes=True):
+    def fetchEvent(self, eventId, accessToken, options={}):
         # set temporary data
-        self._accessToken = accessToken
-        self._currentId = eventId
-        self._shouldFetchParticipation = shouldFetchParticipation
-        self._shouldFetchFeed = shouldFetchFeed
-        self._shouldFetchComments = shouldFetchComments
-        self._shouldFetchLikes = shouldFetchLikes
+        self._setTemporaryData(accessToken, eventId, options)
+        
         # fetch participant data:
         participation = []
-        if self._shouldFetchParticipation:
+        if self._shouldFetch("participation"):
             participation = self._fetchParticipation()
         # fetch event feed:
         feed = []
-        if self._shouldFetchFeed:
+        if self._shouldFetch("feed"):
             feed = self._fetchFeed()
         # create final json:
         finalJson = json.dumps({"participation": participation, "feed": feed})
+        
         # reset temporary data
-        self._accessToken = None
-        self._currentId = None
-        self._shouldFetchParticipation = None
-        self._shouldFetchFeed = None
-        self._shouldFetchComments = None
-        self._shouldFetchLikes = None
+        self._resetTemporaryData()
         # return final json
         return finalJson
 
-    def fetchPage(self, pageId, accessToken, shouldFetchFeed=True, shouldFetchComments=True, shouldFetchLikes=True):
+    def fetchPage(self, pageId, accessToken, options={}):
         # set temporary data
-        self._accessToken = accessToken
-        self._currentId = pageId
-        self._shouldFetchFeed = shouldFetchFeed
-        self._shouldFetchComments = shouldFetchComments
-        self._shouldFetchLikes = shouldFetchLikes
+        self._setTemporaryData(accessToken, pageId, options)
+
         # fetch page feed:
         feed = []
-        if self._shouldFetchFeed:
+        if self._shouldFetch("feed"):
             feed = self._fetchFeed()
         # fetch page likes:
         likes = []
-        if self._shouldFetchLikes:
+        if self._shouldFetch("likes"):
             likes = self._fetchLikes(self._currentId)
         # create final json:
         finalJson = json.dumps({"feed": feed, "likes": likes})
+
         # reset temporary data
-        self._accessToken = None
-        self._currentId = None
-        self._shouldFetchFeed = None
-        self._shouldFetchComments = None
-        self._shouldFetchLikes = None
+        self._resetTemporaryData()
         # return final json
         return finalJson
+    
+    def fetchUserId(self, accessToken, options={}):
+        # set temporary data
+        self._setTemporaryData(accessToken, "me", options)
+        
+        # fetch
+        user = self._fetchItem("me")
+        userId = None
+        if "id" not in user.keys():
+            print("Error: fb data does not contain id for user! Returning None")
+        else:
+            userId = user["id"]
+        
+        # reset temporary data
+        self._resetTemporaryData()
+        # return data
+        return userId
+    
+    def fetchUserActivity(self, userId, accessToken, options={}):
+        # set temporary data
+        self._setTemporaryData(accessToken, userId, options)
+        
+        # fetch own posts
+        activity = []
+        feed = self._fetchItem(userId+"/posts", ["created_time","from","likes","link","message","shares","type","updated_time"])
+        
+        # reset temporary data
+        self._resetTemporaryData()
+        # return data
+        return feed
 
-####################
+#-##################
 # end of class def #
-####################
+#-##################
 
-# NOTE: the script takes a long time to run with events much any decent amount of data. If you are only testing the script, try it with a minimal event for your own sanity
+
+
+#-###################
+# unit tests (ToDo) #
+#-###################
+
 if __name__ == "__main__":
+    print("--- UNIT TESTS START ---")
     accessToken = input("paste access token here, then enter: ")
-    eventsToFetch = ["724641294332217","847916881985099","468794753302290","1660348977536049","500590370113391","1068122033207712","526212614201771","121902428163319"]
-    # NOTE: page fetching does not work quite as expected (it crashes),  consult JAHugawa before trying this at home!
-    pagesToFetch = []#"1125819457447058"]
-
     fb = FBDataFetcher()
-
-    # fetch events
-    for eventId in eventsToFetch:
-        eventJson = fb.fetchEvent(eventId, accessToken, True, True, True, True)
-        # dump to file
-        f = open("event_"+eventId+".json", "w")
-        f.write(eventJson)
-        f.close()
-    # fetch pages
-    for pageId in pagesToFetch:
-        pageJson = fb.fetchPage(pageId, accessToken, True, True, True)
-        # dump to file
-        f = open("page_"+pageId+".json", "w")
-        f.write(pageJson)
-        f.close()
-
+    userId = fb.fetchUserId(accessToken)
+    print("Your user id is "+userId)
+    print("--- UNIT TESTS END ---")

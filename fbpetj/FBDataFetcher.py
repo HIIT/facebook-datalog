@@ -112,19 +112,13 @@ class FBDataFetcher:
         parsed = json.loads(fbResponseData)
         if "data" in parsed.keys():
             for userData in parsed["data"]:
-                if set(["rsvp_status","id"]).issubset(set(userData.keys())):
-                    participants.append(userData)
+                participants.append(userData)
         return participants
 
     def _parseComment(self, fbResponseData):
         comment = None
         parsed = json.loads(fbResponseData)
         comment = parsed.copy()
-        #if set(["created_time","from","message","id"]).issubset(set(parsed.keys())):
-        #    if not set(["name","id"]).issubset(set(parsed["from"].keys())):
-        #        print("Warning: a comment is missing data!")
-        #else:
-        #    print("Warning: a comment is missing data!")
         return comment
 
     # parse likes, return an array of fb user ids
@@ -133,8 +127,7 @@ class FBDataFetcher:
         parsed = json.loads(fbResponseData)
         if "data" in parsed.keys():
             for userData in parsed["data"]:
-                if set(["id"]).issubset(set(userData.keys())):
-                    likes.append({"id": userData["id"]})
+                likes.append(userData)
         return likes
 
 #-#########################
@@ -147,7 +140,7 @@ class FBDataFetcher:
             print("ERROR: alert the programmers! Trying to use "+participationType+" as participation type! No participation data for this type will be returned!")
             return []
         participation = []
-        nextUrl = self._API_URL+self._currentId+"/"+participationType+"?fields=rsvp_status,id&format=json&limit="+str(self._PAGINATION_LIMIT)+"&access_token="+self._accessToken
+        nextUrl = self._API_URL+self._currentId+"/"+participationType+"?fields=rsvp_status,id,name&format=json&limit="+str(self._PAGINATION_LIMIT)+"&access_token="+self._accessToken
         while nextUrl != None:
             response = self._makeAPIRequest(nextUrl)
             responseData = response.read().decode("utf-8")
@@ -161,7 +154,7 @@ class FBDataFetcher:
 
     def _fetchLikes(self, itemId):
         likes = []
-        nextUrl = self._API_URL+itemId+"/likes?fields=id&format=json&access_token="+self._accessToken+"&limit="+str(self._PAGINATION_LIMIT)
+        nextUrl = self._API_URL+itemId+"/likes?fields=id,name&format=json&access_token="+self._accessToken+"&limit="+str(self._PAGINATION_LIMIT)
         while nextUrl != None:
             response = self._makeAPIRequest(nextUrl)
             responseData = response.read().decode("utf-8")

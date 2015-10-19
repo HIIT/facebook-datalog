@@ -13,8 +13,8 @@ import os
 import shlex
 import subprocess
 import sys
-import urllib.request
-import urlparse # for parse_qs
+import urllib.request # for urlopen
+import urllib.parse # for parse_qs
 from wsgiref.simple_server import make_server
 
 from AppConfiguration import *
@@ -22,6 +22,8 @@ from DbConnection import *
 from FBDataFetcher import *
 import TextToHtml as T2H
 
+def toBytes(s):
+    return bytes(s,"ascii")
 
 def app(environ, start_response):
     start_response('200 OK', [('Content-Type', 'text/html')])
@@ -30,7 +32,7 @@ def app(environ, start_response):
     error = ""
 
     # handle errors / fetch access token
-    getParams = urlparse.parse_qs(environ["QUERY_STRING"])
+    getParams = urllib.parse.parse_qs(environ["QUERY_STRING"])
     if "error_reason" and "error" and "error_description" in getParams: #user denied request
         loginSuccessful = False
         error = getParams["error_description"].value
@@ -68,9 +70,9 @@ def app(environ, start_response):
 
     # end this process by returning success message
     if loginSuccessful:
-        yield """<html><body><h1>Login successful! The code is crunching...</h1></body></html>"""
+        yield toBytes("<html><body><h1>Login successful! The code is crunching...</h1></body></html>")
     else:
-        yield """<html><body><h1>Login failed! Reason: """+T2H.convert(error)+"""</h1></body></html>"""
+        yield toBytes("<html><body><h1>Login failed! Reason: "+T2H.convert(error)+"</h1></body></html>")
 
 port = 9090
 kuplassaServer = make_server('localhost', port, app)

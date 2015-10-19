@@ -143,7 +143,7 @@ class FBDataFetcher:
         parsed = json.loads(fbResponseData)
         if "data" in parsed.keys():
             for userData in parsed["data"]:
-                if set(["id"."name"]).issubset(set(userData.keys())):
+                if set(["id","name"]).issubset(set(userData.keys())):
                     friends.append({"id": userData["id"], "name": userData["name"]})
         return friends
 

@@ -46,7 +46,6 @@ class DbConnection:
         self._startOperation()
         
         # save user id and access token
-        print(userId)
         self._cursor.execute("""SELECT access_token FROM access_tokens WHERE user_id IS ?;""", (userId,))
         row = self._cursor.fetchone()
         accessToken = row[0]
@@ -71,3 +70,28 @@ class DbConnection:
             self._cursor.execute("""INSERT INTO user_activity VALUES (?, ?, ?, ?, ?, ?);""", tuple(r))
         
         self._finishOperation()
+
+    def getAllUserIds(self):
+        self._startOperation()
+        
+        self._cursor.execute("""SELECT user_id FROM access_tokens;""")
+        rows = self._cursor.fetchall()
+        userIds = []
+        for r in rows:
+            userIds.append(r[0])
+        
+        self._finishOperation()
+        return userIds
+
+    def getUserActivity(self, userId, getComments=False,getLikes=False):
+        self._startOperation()
+        
+        self._cursor.execute("""SELECT * FROM user_activity WHERE user_id IS ? AND content_type IS "post";""", (userId,))
+        posts = self._cursor.fetchall()
+
+        if getComments or getLikes:
+            print("WARNING: getUserActivity getComments or getLikes not yet implemented!")
+        
+        self._finishOperation()
+        return posts
+

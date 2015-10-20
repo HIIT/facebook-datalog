@@ -6,6 +6,7 @@
 # DOJO: check shell=True vulnerabilities!
 # DOJO: python 2 (because of server configs >.<) so does not work with python3
 # DOJO: token verification
+# DOJO: use ErrorLog here (license first!) -> wrap all print/filelog there
 
 from cgi import escape
 #from flup.server.fcgi import WSGIServer

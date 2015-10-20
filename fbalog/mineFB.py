@@ -8,7 +8,7 @@ from FBDataFetcher import *
 if __name__ == "__main__":
     # except one additional argument: user id
     if len(sys.argv) < 2:
-        f.open(LOG_PATH, "w")
+        f = open(LOG_PATH+"error.log", "w")
         f.write("ERROR: no logging can be done! Process must receive one additional argument (user id to log)")
         f.close()
     else:
@@ -45,4 +45,5 @@ if __name__ == "__main__":
                         rowsToInsert.append([l["id"],"like","","user",userId,likeTime])
         # ... push rows to db, then we are done
         db.insertIntoUserActivity(rowsToInsert)
+        print("user %s mining completed!" % userId)
 

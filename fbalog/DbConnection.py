@@ -18,7 +18,7 @@ class DbConnection:
         if self._connection != None or self._cursor != None:
             print("Warning: existing db connection not closed! Closing it now and starting a new one.")
             self._finishOperation()
-        self._connection = sqlite.connect(self._path)
+        self._connection = sqlite3.connect(self._path)
         self._cursor = self._connection.cursor()
     
     def _finishOperation(self):
@@ -46,7 +46,8 @@ class DbConnection:
         self._startOperation()
         
         # save user id and access token
-        self._cursor.execute("""SELECT access_token FROM access_tokens WHERE user_id IS ?;""", (userId))
+        print(userId)
+        self._cursor.execute("""SELECT access_token FROM access_tokens WHERE user_id IS ?;""", (userId,))
         row = self._cursor.fetchone()
         accessToken = row[0]
         

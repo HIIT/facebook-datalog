@@ -6,7 +6,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
-import FakeResponse
+from FakeResponse import *
 
 # JAHugawa's TODO Corner
 # DOJO: requestCount != 1 UNTESTED
@@ -235,17 +235,23 @@ class FBDataFetcher:
         # return fetched item
         return item
 
-    def _fetchFeed(self):
-        feed = []
-        nextUrl = self._API_URL+self._currentId+"/feed?format=json&limit="+str(self._PAGINATION_LIMIT)+"&access_token="+self._accessToken
+    def _fetchMany(self, fromWhere, fields=[]):
+        fetched = []
+        nextUrl = self._API_URL+fromWhere+"?format=json&limit="+str(self._PAGINATION_LIMIT)+"&access_token="+self._accessToken
         while nextUrl != None:
             response = self._makeAPIRequest(nextUrl)
             responseData = response.read().decode("utf-8")
             ids = self._parseItemIds(responseData)
             for itemId in ids:
-                feed.append(self._fetchItem(itemId))
+                fetched.append(self._fetchItem(itemId, fields))
             nextUrl = self._parsePaginationNextUrl(responseData)
-        return feed
+        return fetched
+
+    def _fetchFeed(self):
+        return self._fetchMany(self._currentId+"/feed")
+
+    def _fetchPosts(self):
+        return self._fetchMany(self._currentId+"/posts", ["created_time","from","likes","link","message","shares","type","updated_time"])
 
 #-##################
 # PUBLIC FUNCTIONS #
@@ -314,7 +320,7 @@ class FBDataFetcher:
         
         # fetch own posts
         activity = []
-        feed = self._fetchItem(userId+"/posts", ["created_time","from","likes","link","message","shares","type","updated_time"])
+        feed = self._fetchPosts()
         
         # reset temporary data
         self._resetTemporaryData()

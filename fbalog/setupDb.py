@@ -7,18 +7,8 @@
 # DOJO: encrypt access tokens?
 
 import sqlite3
+from DbConnection import *
 
-DB_FILEPATH = "fb_imports.db"
-
-# establish db connection
-dbConnection = sqlite3.connect(DB_FILEPATH)
-dbCursor = dbConnection.cursor()
-
-# create required tables
-dbCursor.execute("""CREATE TABLE IF NOT EXISTS user_activity (user_id TEXT, content_type TEXT, content TEXT, target_type TEXT, target_id TEXT, created_time TEXT);""")
-dbCursor.execute("""CREATE TABLE IF NOT EXISTS access_tokens (user_id TEXT, access_token TEXT);""")
-
-
-# save and exit
-dbConnection.commit()
-dbConnection.close()
+if __name__ == "__main__":
+    db = DbConnection()
+    db.initTables()

@@ -18,7 +18,6 @@ if __name__ == "__main__":
         userId = sys.argv[1]
         accessToken = db.getAccessToken(userId)
         
-        # DOJO: write mining operations
         activity = fb.fetchUserActivity(userId,accessToken)
         rowsToInsert = []
         for item in activity:
@@ -44,5 +43,6 @@ if __name__ == "__main__":
                         # DOJO: validate field existence
                         likeTime = time.strftime("%Y-%m-%dT%H:%M:%S+0000",time.gmtime()) #DOJO: time zone!
                         rowsToInsert.append([l["id"],"like","","user",userId,likeTime])
-        # ... push rows to db
-        
+        # ... push rows to db, then we are done
+        db.insertIntoUserActivity(rowsToInsert)
+

@@ -1,6 +1,8 @@
 # Jahu's notes and workfiles
 **/*.jgw
 **/*.jgw.sh
+# vim temporary files
+**/*.swp
 # python temporary files
 **/__pycache__
 # generated data files

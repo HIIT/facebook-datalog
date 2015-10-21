@@ -297,7 +297,7 @@ class FBDataFetcher:
         # return final json
         return finalJson
     
-    def fetchUserId(self, accessToken, options={}):
+    def fetchUserId(self, accessToken, options={"default":False}):
         # set temporary data
         self._setTemporaryData(accessToken, "me", options)
         
@@ -313,7 +313,24 @@ class FBDataFetcher:
         self._resetTemporaryData()
         # return data
         return userId
-    
+
+    def fetchUserName(self, userId, accessToken, options={"default":False}):
+        # set temporary data
+        self._setTemporaryData(accessToken, "me", options)
+        
+        # fetch
+        user = self._fetchItem("me", fields=["name"])
+        userName = "failed_to_fetch_name"
+        if "name" not in user.keys():
+            print("Error: fb data does not contain name for user! Returning dummy value...")
+        else:
+            userName = user["name"]
+        
+        # reset temporary data
+        self._resetTemporaryData()
+        # return data
+        return userName
+
     def fetchUserActivity(self, userId, accessToken, options={}):
         # set temporary data
         self._setTemporaryData(accessToken, userId, options)

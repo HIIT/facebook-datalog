@@ -6,6 +6,12 @@ from AppConfiguration import *
 from DbConnection import *
 from FBDataFetcher import *
 
+# JAHugawa's ToDo corner:
+# DOJO: flag to get users to separate user-named-files
+# DOJO: flag to use id instead of name
+# DOJO: complete dump versus posts-only
+# DOJO: use argparse!
+
 if __name__ == "__main__":
     db = DbConnection()
     fb = FBDataFetcher()

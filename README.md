@@ -1,8 +1,5 @@
 Various Facebook data logging utilities
 
-code tested with python 3.2
-no external dependencies
+fbpetj subdirectory contains utilities to fetch facebook pages and events. see the README.md file in the directory for details
 
-fbpetj: python script that takes a facebook access token and a list of facebook ids of public events. Then the script fetches data (basic information, feed, comments, likes, participation) of the event and pushes it to a json file.
-
-In case of questions ask Jesper (jesper.hjorth@hiit.fi).
+In case of questions or comments you can mail me at jesper.hjorth@hiit.fi

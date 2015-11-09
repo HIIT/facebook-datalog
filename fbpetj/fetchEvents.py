@@ -13,7 +13,11 @@ if __name__ == "__main__":
 
     def listFromFile(path):
         with open(path,'r') as f:
-            return f.read().split('\n')
+            lines = f.read().split('\n')
+        for i in range(len(lines)-1, -1, -1):
+            if lines[i] == "":
+                del lines[i]
+        return lines
 
     accessToken = askUser("paste access token here, then press enter: ")
     eventsToFetch = listFromFile('event_ids.txt')

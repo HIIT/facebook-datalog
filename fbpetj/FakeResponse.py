@@ -1,7 +1,13 @@
+import sys
+
 class FakeResponse:
     def __init__(self):
-        self._content = bytes("{}","ascii")
-        self._empty = bytes("","ascii") # return this if someone accidentally calls read() twice
+        if sys.version_info >= (3,0):
+            self._content = bytes("{}","ascii")
+            self._empty = bytes("","ascii") # return this if someone accidentally calls read() twice
+        else:
+            self._content = "{}"
+            self._empty = ""
         self._isRead = False
     def read(self):
         if self._isRead:

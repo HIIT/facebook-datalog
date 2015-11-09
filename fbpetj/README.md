@@ -5,7 +5,9 @@ How to use:
 1) make sure you have python installed (it doesn't matter whether it's python2 or python3, both work)
 
 2) make sure you have a facebook account to use with the program. You need to:
+
     a) Like the pages you want to get
+
     b) Mark the events you want to get either by 'going' to them or clicking the 'interested' button
 
 3) Go to https://developers.facebook.com/docs/apps/register and do the 'create developer account' part.

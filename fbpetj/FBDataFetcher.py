@@ -4,21 +4,26 @@
 import json
 import sys
 import time
-import urllib.error
-import urllib.request
+if sys.version_info >= (3,0):
+    from urllib.request import urlopen as urllibOpen
+    from urllib.error import URLError as URLError
+    from urllib.error import HTTPError as HTTPError
+else:
+    from urllib2 import urlopen as urllibOpen
+    from urllib2 import URLError as URLError
+    from urllib2 import HTTPError as HTTPError
 from FakeResponse import *
 
 # JAHugawa's TODO Corner
 # DOJO: requestCount != 1 UNTESTED
 # DOJO: when API returns X users attending, FB page says X+1 O.o
-# DOJO: page fetch does not work as expected, test with several pages
+# DOJO: page fetch does not work as expected, test with several pages --> depends on what you have liked in fb, apparently >.<
 # DOJO: optimize to use fields to get likes, comments with same requests -> less rate limit usage
-# DOJO: remove unused permission for facebook review
 
 class FBDataFetcher:
     def __init__(self):
-        self._API_URL = "https://graph.facebook.com/v2.4/"
-        self._PAGINATION_LIMIT = 1000
+        self._API_URL = "https://graph.facebook.com/v2.5/"
+        self._PAGINATION_LIMIT = 100 # DOJO temporary as 100 for pages, return to 1000?
         self._HTTP_ERROR_RETRIES = 3
         self._RATE_LIMIT_COUNT = 600
         self._RATE_LIMIT_SECONDS = 600
@@ -53,13 +58,11 @@ class FBDataFetcher:
         # send http request and return it's answer
         for i in range(0, self._HTTP_ERROR_RETRIES):
             try:
-                return urllib.request.urlopen(url, data=data)
-            except urllib.error.URLError as e:
+                return urllibOpen(url, data=data)
+            except URLError as e:
                 print("Url error: "+e.reason)
-            except urllib.error.HTTPError as e:
+            except HTTPError as e:
                 print("Http error "+e.code+": "+e.reason)
-            except urllib.error.ContentTooShortError as e:
-                print(e)
         print("Warning: request to "+url+" failed. Returning an empty response")
         return FakeResponse()
 
@@ -237,7 +240,7 @@ class FBDataFetcher:
         if self._shouldFetch("feed"):
             feed = self._fetchFeed()
         # create final json:
-        finalJson = json.dumps({"participation": participation, "feed": feed})
+        finalJson = json.dumps({"participation": participation, "feed": feed}, indent=2, check_circular=False)
         
         # reset temporary data
         self._resetTemporaryData()
@@ -257,7 +260,7 @@ class FBDataFetcher:
         if self._shouldFetch("likes"):
             likes = self._fetchLikes(self._currentId)
         # create final json:
-        finalJson = json.dumps({"feed": feed, "likes": likes})
+        finalJson = json.dumps({"feed": feed, "likes": likes}, indent=2, check_circular=False)
 
         # reset temporary data
         self._resetTemporaryData()

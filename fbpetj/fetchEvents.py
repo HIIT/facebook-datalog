@@ -1,13 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import sys
+if sys.version_info >= (3,0):
+    askUser = input
+else:
+    askUser = raw_input
+
 from FBDataFetcher import *
 
 if __name__ == "__main__":
-    accessToken = input("paster access token here, then press enter: ")
-    eventsToFetch = ["724641294332217","847916881985099","468794753302290","1660348977536049","500590370113391","1068122033207712","526212614201771","121902428163319"]
-    # NOTE: page fetching does not work quite as expected (it crashes),  consult JAHugawa before trying this at home!
-    pagesToFetch = []#"1125819457447058"]
+
+    def listFromFile(path):
+        with open(path,'r') as f:
+            return f.read().split('\n')
+
+    accessToken = askUser("paste access token here, then press enter: ")
+    eventsToFetch = listFromFile('event_ids.txt')
+    pagesToFetch = listFromFile('page_ids.txt')
     fb = FBDataFetcher()
 
     # fetch events

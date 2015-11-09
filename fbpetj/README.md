@@ -30,5 +30,5 @@ How to use:
 
 
 
-In case of problems or if you have any comments regarding anything, feel free to contact me at jesper.hjorth@hiit.fi
+In case of comments, feedback, ideas, problems etc. feel free to contact me at jesper.hjorth@hiit.fi
 

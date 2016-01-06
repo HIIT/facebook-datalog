@@ -8,3 +8,4 @@
 # generated data files
 fbpetj/event_*.json
 fbpetj/page_*.json
+fbpetj/group_*.json

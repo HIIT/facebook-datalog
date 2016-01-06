@@ -22,6 +22,7 @@ if __name__ == "__main__":
     accessToken = askUser("paste access token here, then press enter: ")
     eventsToFetch = listFromFile('event_ids.txt')
     pagesToFetch = listFromFile('page_ids.txt')
+    groupsToFetch = listFromFile('group_ids.txt')
     fb = FBDataFetcher()
 
     # fetch events
@@ -37,5 +38,12 @@ if __name__ == "__main__":
         # dump to file
         f = open("page_"+pageId+".json", "w")
         f.write(pageJson)
+        f.close()
+    # fetch groups
+    for groupId in groupsToFetch:
+        groupJson = fb.fetchEvent(groupId, accessToken, options={"default": True, "participation": False, "likes": False})
+        # dump to file
+        f = open("group_"+groupId+".json", "w")
+        f.write(groupJson)
         f.close()
 

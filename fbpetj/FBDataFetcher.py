@@ -15,6 +15,7 @@ else:
 from FakeResponse import *
 
 # JAHugawa's TODO Corner
+# DOJO: fetching group, check fetching participation! is that the source of all the mystery errors?
 # DOJO: requestCount != 1 UNTESTED
 # DOJO: when API returns X users attending, FB page says X+1 O.o
 # DOJO: page fetch does not work as expected, test with several pages --> depends on what you have liked in fb, apparently >.<

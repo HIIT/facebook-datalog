@@ -19,6 +19,7 @@ from FakeResponse import *
 # DOJO: when API returns X users attending, FB page says X+1 O.o
 # DOJO: page fetch does not work as expected, test with several pages --> depends on what you have liked in fb, apparently >.<
 # DOJO: optimize to use fields to get likes, comments with same requests -> less rate limit usage
+# DOJO: standalone json file streamer (use tree traversal as base! stack-thinking), state-machine via that?
 
 class FBDataFetcher:
     def __init__(self):
@@ -66,15 +67,28 @@ class FBDataFetcher:
         print("Warning: request to "+url+" failed. Returning an empty response")
         return FakeResponse()
 
-    def _setTemporaryData(self, accessToken, currentId=None, options={}):
+    def _setTemporaryData(self, accessToken, currentId=None, filepath=None, options={}):
         self._accessToken = accessToken
         self._currentId = currentId
+        self._filepath = filepath
         self._options = options
+        
+        self._outFile = None
+        if filepath:
+            self._outFile = open(filepath, "w")
+            # these parameters exist only when self._outFile exists
+            self._jsonNeedComma = False
     
     def _resetTemporaryData(self):
+        if self._outFile:
+            self._outFile.close()
+        self._outFile = None
+        
         self._accessToken = None
         self._currentId = None
+        self._filepath = None
         self._options = None
+        
 
     def _shouldFetch(self, key):
         if key not in self._options:
@@ -133,6 +147,45 @@ class FBDataFetcher:
                 likes.append(userData)
         return likes
 
+#-##################################
+# PRIVATE JSON STREAMING FUNCTIONS #
+#-##################################
+
+    def _jsonStartObject(self, key=None):
+        self._jsonONeedComma = False
+        if key:
+            self._outFile.write('"%s":' % key)
+        self._outFile.write("{")
+    
+    def _jsonEndObject(self):
+        self._outFile.write("}")
+    
+    def _jsonToObject(self, key, val=None):
+        if self._jsonONeedComma:
+            self._outFile.write(",")
+        else:
+            self._jsonONeedComma = True
+        self._outFile.write('"%s":' % key)
+        if val:
+            self._outFile.write(json.dumps(val))
+
+    def _jsonStartList(self, key=None):
+        self._jsonNeedComma = False
+        if key:
+            self._outFile.write('"%s:"' % key)
+        self._outFile.write("[")
+    
+    def _jsonEndList(self):
+        self._outFile.write("]")
+
+    def _jsonToList(self, entries):
+        for e in entries:
+            if self._jsonNeedComma:
+                self._outFile.write(",")
+            else:
+                self._jsonNeedComma = True
+            self._outFile.write(json.dumps(p))
+
 #-#########################
 # PRIVATE FETCH FUNCTIONS #
 #-#########################
@@ -147,13 +200,27 @@ class FBDataFetcher:
         while nextUrl != None:
             response = self._makeAPIRequest(nextUrl)
             responseData = response.read().decode("utf-8")
-            participation += self._parseParticipationData(responseData)
+            if self._outFile:
+                self._jsonToList(  self._parseParticipationData(responseData)  )
+            else:
+                participation += self._parseParticipationData(responseData)
             nextUrl = self._parsePaginationNextUrl(responseData)
         return participation
         
     def _fetchParticipation(self):
-        participation = self._fetchParticipationOfType("attending") + self._fetchParticipationOfType("maybe") + self._fetchParticipationOfType("declined") + self._fetchParticipationOfType("noreply")
-        return participation
+        if self._outFile:
+            self._jsonStartList()
+            
+            self._fetchParticipationOfType("attending")
+            self._fetchParticipationOfType("maybe")
+            self._fetchParticipationOfType("declined")
+            self._fetchParticipationOfType("noreply")
+            
+            self._jsonEndList()
+            return []
+        else:
+            participation = self._fetchParticipationOfType("attending") + self._fetchParticipationOfType("maybe") + self._fetchParticipationOfType("declined") + self._fetchParticipationOfType("noreply")
+            return participation
 
     def _fetchLikes(self, itemId):
         likes = []
@@ -208,19 +275,27 @@ class FBDataFetcher:
         # get comments
         if self._shouldFetch("comments"):
             item["comments"] = self._fetchComments(itemId)
-        # return fetched item
         return item
 
+    # DOJO: optimized to fetch items here, so fetchItems only fetches comments / likes
     def _fetchFeed(self):
         feed = []
         nextUrl = self._API_URL+self._currentId+"/feed?fields=id&format=json&limit="+str(self._PAGINATION_LIMIT)+"&access_token="+self._accessToken
+        if self._outFile:
+            self._jsonStartList()
         while nextUrl != None:
             response = self._makeAPIRequest(nextUrl)
             responseData = response.read().decode("utf-8")
             ids = self._parseItemIds(responseData)
             for itemId in ids:
-                feed.append(self._fetchItem(itemId))
+                if self._outFile:
+                    # DOJO: inproper streaming
+                    self._jsonToList(self._fetchItem(itemId))
+                else:
+                    feed.append(self._fetchItem(itemId))
             nextUrl = self._parsePaginationNextUrl(responseData)
+        if self._outFile:
+            self._jsonEndList()
         return feed
 
 #-##################
@@ -229,7 +304,7 @@ class FBDataFetcher:
 
     def fetchEvent(self, eventId, accessToken, options={}):
         # set temporary data
-        self._setTemporaryData(accessToken, eventId, options)
+        self._setTemporaryData(accessToken, eventId, options=options)
         
         # fetch participant data:
         participation = []
@@ -246,10 +321,30 @@ class FBDataFetcher:
         self._resetTemporaryData()
         # return final json
         return finalJson
-
+    
+    # returns True on success, otherwise False
+    def fetchEventToFile(self, eventId, accessToken, filepath, options={}):
+        # set temporary data
+        self._setTemporaryData(accessToken, eventId, filepath, options)
+        
+        # fetch participant data:
+        self._jsonStartObject()
+        if self._shouldFetch("participation"):
+            self._jsonToObject("participation")
+            self._fetchParticipation()
+        # fetch event feed:
+        if self._shouldFetch("feed"):
+            self._jsonToObject("feed")
+            self._fetchFeed()
+        self._jsonEndObject()
+        
+        # reset temporary data
+        self._resetTemporaryData()
+        return True
+    
     def fetchPage(self, pageId, accessToken, options={}):
         # set temporary data
-        self._setTemporaryData(accessToken, pageId, options)
+        self._setTemporaryData(accessToken, pageId, options=options)
 
         # fetch page feed:
         feed = []
@@ -267,9 +362,28 @@ class FBDataFetcher:
         # return final json
         return finalJson
     
+    # returns True on success, otherwise False
+    def fetchPageToFile(self, pageId, accessToken, filepath, options={}):
+        # set temporary data
+        self._setTemporaryData(accessToken, pageId, filepath, options)
+
+        self._jsonStartObject()
+        # fetch page feed:
+        if self._shouldFetch("feed"):
+            self._jsonToObject("feed")
+            self._fetchFeed()
+        # fetch page likes:
+        if self._shouldFetch("likes"):
+            self._jsonToObject("likes", self._fetchLikes(self._currentId))
+        self._jsonEndObject()
+
+        # reset temporary data
+        self._resetTemporaryData()
+        return True
+    
     def fetchUserId(self, accessToken, options={}):
         # set temporary data
-        self._setTemporaryData(accessToken, "me", options)
+        self._setTemporaryData(accessToken, "me", options=options)
         
         # fetch
         user = self._fetchItem("me")
@@ -286,7 +400,7 @@ class FBDataFetcher:
     
     def fetchUserActivity(self, userId, accessToken, options={}):
         # set temporary data
-        self._setTemporaryData(accessToken, userId, options)
+        self._setTemporaryData(accessToken, userId, options=options)
         
         # fetch own posts
         activity = []

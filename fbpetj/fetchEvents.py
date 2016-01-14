@@ -20,30 +20,19 @@ if __name__ == "__main__":
         return lines
 
     accessToken = askUser("paste access token here, then press enter: ")
-    eventsToFetch = listFromFile('event_ids.txt')
     pagesToFetch = listFromFile('page_ids.txt')
     groupsToFetch = listFromFile('group_ids.txt')
     fb = FBDataFetcher()
-
+    
     # fetch events
-    for eventId in eventsToFetch:
-        eventJson = fb.fetchEvent(eventId, accessToken, options={"default": True})
-        # dump to file
-        f = open("event_"+eventId+".json", "w")
-        f.write(eventJson)
-        f.close()
+    for eventId in listFromFile('event_ids.txt'):
+        filepath = "event_"+eventId+".json"
+        fb.fetchEventToFile(eventId, accessToken, filepath, options={"default": True})
     # fetch pages
-    for pageId in pagesToFetch:
-        pageJson = fb.fetchPage(pageId, accessToken, options={"default": True})
-        # dump to file
-        f = open("page_"+pageId+".json", "w")
-        f.write(pageJson)
-        f.close()
+    for pageId in listFromFile('page_ids.txt'):
+        filepath = "page_"+pageId+".json"
+        fb.fetchPageToFile(pageId, accessToken, filepath, options={"default": True})
     # fetch groups
-    for groupId in groupsToFetch:
-        groupJson = fb.fetchEvent(groupId, accessToken, options={"default": True, "participation": False, "likes": False})
-        # dump to file
-        f = open("group_"+groupId+".json", "w")
-        f.write(groupJson)
-        f.close()
-
+    for groupId in listFromFile('group_ids.txt'):
+        filepath = "group_"+groupId+".json"
+        fb.fetchEventToFile(groupId, accessToken, filepath, options={"default": True, "likes": False})

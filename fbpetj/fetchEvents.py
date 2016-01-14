@@ -12,12 +12,15 @@ from FBDataFetcher import *
 if __name__ == "__main__":
 
     def listFromFile(path):
-        with open(path,'r') as f:
-            lines = f.read().split('\n')
-        for i in range(len(lines)-1, -1, -1):
-            if lines[i] == "":
-                del lines[i]
-        return lines
+        try:
+            with open(path,'r') as f:
+                lines = f.read().split('\n')
+            for i in range(len(lines)-1, -1, -1):
+                if lines[i] == "":
+                    del lines[i]
+            return lines
+        except:
+            return []
 
     accessToken = askUser("paste access token here, then press enter: ")
     pagesToFetch = listFromFile('page_ids.txt')

@@ -166,7 +166,7 @@ class FBDataFetcher:
         else:
             self._jsonONeedComma = True
         self._outFile.write('"%s":' % key)
-        if val:
+        if val is not None:
             self._outFile.write(json.dumps(val))
 
     def _jsonStartList(self, key=None):
@@ -184,7 +184,10 @@ class FBDataFetcher:
                 self._outFile.write(",")
             else:
                 self._jsonNeedComma = True
-            self._outFile.write(json.dumps(p))
+            self._outFile.write(json.dumps(e))
+
+    def _jsonToListSingle(self, entry):
+        self._jsonToList([entry])
 
 #-#########################
 # PRIVATE FETCH FUNCTIONS #
@@ -290,7 +293,7 @@ class FBDataFetcher:
             for itemId in ids:
                 if self._outFile:
                     # DOJO: inproper streaming
-                    self._jsonToList(self._fetchItem(itemId))
+                    self._jsonToListSingle(self._fetchItem(itemId))
                 else:
                     feed.append(self._fetchItem(itemId))
             nextUrl = self._parsePaginationNextUrl(responseData)
@@ -374,7 +377,8 @@ class FBDataFetcher:
             self._fetchFeed()
         # fetch page likes:
         if self._shouldFetch("likes"):
-            self._jsonToObject("likes", self._fetchLikes(self._currentId))
+            likes =  self._fetchLikes(self._currentId)
+            self._jsonToObject("likes", likes)
         self._jsonEndObject()
 
         # reset temporary data

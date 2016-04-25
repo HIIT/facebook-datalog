@@ -1,2 +1,11 @@
+# authentication file for run sh scripts
+token.auth
+
+# generated files
+event_*.json
+group_*.json
+page_*.json
+
+# python compiled code
 *.pyc
 __pycache__

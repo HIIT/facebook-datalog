@@ -12,6 +12,9 @@ do
     s=$currentYear-01-01
     u=`expr $currentYear + 1`-01-01
     python3 fetchEvents.py -a $authPath -s $s -u $u
+    echo "Processed year "$currentYear", moving on..."
 
     currentYear = `expr $currentYear + 1`
 done
+
+echo "All years fetched! See results!"

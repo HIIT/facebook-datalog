@@ -73,11 +73,17 @@ class FBDataFetcher:
         self._accessToken = accessToken
         self._currentId = currentId
         self._options = options
+        self._sinceUntil=""
+        if "since" in options:
+            self._sinceUntil += ("&since=" + options["since"])
+        if "until" in options:
+            self._sinceUntil += ("&until=" + options["until"])
     
     def _resetTemporaryData(self):
         self._accessToken = None
         self._currentId = None
         self._options = None
+        self._sinceUntil=""
 
     def _shouldFetch(self, key):
         if key not in self._options:
@@ -216,7 +222,7 @@ class FBDataFetcher:
 
     def _fetchFeed(self):
         feed = []
-        nextUrl = self._API_URL+self._currentId+"/feed?fields=id&format=json&limit="+str(self._PAGINATION_LIMIT)+"&access_token="+self._accessToken
+        nextUrl = self._API_URL+self._currentId+"/feed?fields=id&format=json&limit="+str(self._PAGINATION_LIMIT)+"&access_token="+self._accessToken+self._sinceUntil
         while nextUrl != None:
             response = self._makeAPIRequest(nextUrl)
             responseData = response.read().decode("utf-8")

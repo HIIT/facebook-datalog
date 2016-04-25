@@ -11,6 +11,10 @@ from FBDataFetcher import *
 
 if __name__ == "__main__":
 
+    def authFromFile(path):
+        with open(path,'r') as f:
+            return f.read()
+
     def listFromFile(path):
         with open(path,'r') as f:
             lines = f.read().split('\n')
@@ -19,7 +23,22 @@ if __name__ == "__main__":
                 del lines[i]
         return lines
 
-    accessToken = askUser("paste access token here, then press enter: ")
+    # parse args
+    accessToken = None
+    options = {"default": True}
+    timestamp = ""
+    if "-a" in sys.argv:
+        accessToken = authFromFile(sys.argv[sys.argv.index("-a")+1])
+    if "-s" in sys.argv:
+        options["since"] = sys.argv[sys.argv.index("-s")+1]
+        timestamp += "_"
+        timestamp += options["since"]
+    if "-u" in sys.argv:
+        options["until"] = sys.argv[sys.argv.index("-u")+1]
+        timestamp += "_"
+        timestamp += options["until"]
+    if accessToken is None:
+        accessToken = askUser("paste access token here, then press enter: ")
     eventsToFetch = listFromFile('event_ids.txt')
     pagesToFetch = listFromFile('page_ids.txt')
     groupsToFetch = listFromFile('group_ids.txt')
@@ -27,23 +46,25 @@ if __name__ == "__main__":
 
     # fetch events
     for eventId in eventsToFetch:
-        eventJson = fb.fetchEvent(eventId, accessToken, options={"default": True})
+        eventJson = fb.fetchEvent(eventId, accessToken, options=options)
         # dump to file
-        f = open("event_"+eventId+".json", "w")
+        f = open("event_"+eventId+timestamp+".json", "w")
         f.write(eventJson)
         f.close()
     # fetch pages
     for pageId in pagesToFetch:
-        pageJson = fb.fetchPage(pageId, accessToken, options={"default": True})
+        pageJson = fb.fetchPage(pageId, accessToken, options=options)
         # dump to file
-        f = open("page_"+pageId+".json", "w")
+        f = open("page_"+pageId+timestamp+".json", "w")
         f.write(pageJson)
         f.close()
     # fetch groups
     for groupId in groupsToFetch:
-        groupJson = fb.fetchEvent(groupId, accessToken, options={"default": True, "participation": False, "likes": False})
+        options["participation"] = False
+        options["likes"] = False
+        groupJson = fb.fetchEvent(groupId, accessToken, options=options)
         # dump to file
-        f = open("group_"+groupId+".json", "w")
+        f = open("group_"+groupId+timestamp+".json", "w")
         f.write(groupJson)
         f.close()
 

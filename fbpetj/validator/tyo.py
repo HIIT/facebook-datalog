@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+# use function tyo (file name as argument) to validate json created by fbpetj
 
 def tyo(file):
 

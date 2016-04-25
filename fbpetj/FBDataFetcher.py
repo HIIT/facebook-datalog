@@ -59,10 +59,13 @@ class FBDataFetcher:
         for i in range(0, self._HTTP_ERROR_RETRIES):
             try:
                 return urllibOpen(url, data=data)
-            except URLError as e:
-                print("Url error: "+e.reason)
-            except HTTPError as e:
-                print("Http error "+e.code+": "+e.reason)
+            except:
+                pass
+            # commented out because for some reason, the errors didn't work and crashed the code o.O
+            #except URLError as e:
+            #    print("Url error: "+e.reason)
+            #except HTTPError as e:
+            #    print("Http error "+e.code+": "+e.reason)
         print("Warning: request to "+url+" failed. Returning an empty response")
         return FakeResponse()
 

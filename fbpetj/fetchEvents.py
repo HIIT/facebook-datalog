@@ -48,14 +48,14 @@ if __name__ == "__main__":
     for eventId in eventsToFetch:
         eventJson = fb.fetchEvent(eventId, accessToken, options=options)
         # dump to file
-        f = open("event_"+eventId+timestamp+".json", "w")
+        f = open("output/event_"+eventId+timestamp+".json", "w")
         f.write(eventJson)
         f.close()
     # fetch pages
     for pageId in pagesToFetch:
         pageJson = fb.fetchPage(pageId, accessToken, options=options)
         # dump to file
-        f = open("page_"+pageId+timestamp+".json", "w")
+        f = open("output/page_"+pageId+timestamp+".json", "w")
         f.write(pageJson)
         f.close()
     # fetch groups
@@ -64,7 +64,7 @@ if __name__ == "__main__":
         options["likes"] = False
         groupJson = fb.fetchEvent(groupId, accessToken, options=options)
         # dump to file
-        f = open("group_"+groupId+timestamp+".json", "w")
+        f = open("output/group_"+groupId+timestamp+".json", "w")
         f.write(groupJson)
         f.close()
 

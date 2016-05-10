@@ -222,7 +222,7 @@ class FBDataFetcher:
 
     def _fetchFeed(self):
         feed = []
-        nextUrl = self._API_URL+self._currentId+"/feed?fields=id&format=json&limit="+str(self._PAGINATION_LIMIT)+"&access_token="+self._accessToken+self._sinceUntil
+        nextUrl = self._API_URL+self._currentId+"/feed?fields=id&format=json&limit="+str(self._PAGINATION_LIMIT)+self._sinceUntil+"&access_token="+self._accessToken
         while nextUrl != None:
             response = self._makeAPIRequest(nextUrl)
             responseData = response.read().decode("utf-8")

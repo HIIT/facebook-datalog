@@ -9,3 +9,10 @@ page_*.json
 # python compiled code
 *.pyc
 __pycache__
+
+# vim temporary files
+*.swp
+
+# Jahu's notes and workfiles
+*.jgw
+*.jgw.sh

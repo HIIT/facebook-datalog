@@ -22,8 +22,7 @@ from FakeResponse import *
 
 class FBDataFetcher:
     def __init__(self):
-        self._API_URL = "https://graph.facebook.com/v2.5/"
-        self._PAGINATION_LIMIT = 100 # DOJO temporary as 100 for pages, return to 1000?
+        self._API_URL = "https://graph.facebook.com/v2.6/"
         self._HTTP_ERROR_RETRIES = 3
         self._RATE_LIMIT_COUNT = 600
         self._RATE_LIMIT_SECONDS = 600
@@ -236,6 +235,25 @@ class FBDataFetcher:
 # PUBLIC FUNCTIONS #
 #-##################
 
+    def fetch(self, schema):
+        
+
+    # schema is an array of request urls that are fed to the fetch function
+    # returns default schema for fetching page
+    def pageSchema(self, accessToken, pageId):
+        return "TODO"
+
+    # returns default schema for fetching event
+    def eventSchema(self, accessToken, eventId):
+        return "TODO"
+
+    #def fetchEvent(self, accessToken, eventId):
+    #    fetch(self.eventSchema(accessToken,eventId))
+    
+    def fetchPage(self, accessToken, pageId):
+        fetch(self.pageSchema(accessToken,pageId))
+
+    # DOJO: remove legacy once works!
     def fetchEvent(self, eventId, accessToken, options={}):
         # set temporary data
         self._setTemporaryData(accessToken, eventId, options)
@@ -256,26 +274,8 @@ class FBDataFetcher:
         # return final json
         return finalJson
 
-    def fetchPage(self, pageId, accessToken, options={}):
-        # set temporary data
-        self._setTemporaryData(accessToken, pageId, options)
 
-        # fetch page feed:
-        feed = []
-        if self._shouldFetch("feed"):
-            feed = self._fetchFeed()
-        # fetch page likes:
-        likes = []
-        if self._shouldFetch("likes"):
-            likes = self._fetchLikes(self._currentId)
-        # create final json:
-        finalJson = json.dumps({"feed": feed, "likes": likes}, indent=2, check_circular=False)
-
-        # reset temporary data
-        self._resetTemporaryData()
-        # return final json
-        return finalJson
-    
+    # DOJO: left for unit tests - rewrite using the schema idea
     def fetchUserId(self, accessToken, options={}):
         # set temporary data
         self._setTemporaryData(accessToken, "me", options)
@@ -293,18 +293,6 @@ class FBDataFetcher:
         # return data
         return userId
     
-    def fetchUserActivity(self, userId, accessToken, options={}):
-        # set temporary data
-        self._setTemporaryData(accessToken, userId, options)
-        
-        # fetch own posts
-        activity = []
-        feed = self._fetchItem(userId+"/posts", ["created_time","from","likes","link","message","shares","type","updated_time"])
-        
-        # reset temporary data
-        self._resetTemporaryData()
-        # return data
-        return feed
 
 #-##################
 # end of class def #

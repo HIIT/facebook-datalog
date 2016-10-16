@@ -43,6 +43,11 @@ for line in open('wave0.txt'):
 
         data = {}
 
+        data['name'] = fbobject['name']
+        data['id'] = fbid
+        data['type'] = fbtype
+        ## todo: store url as well
+
         if fbtype in ['page', 'group', 'event', 'user']:
             data['feed'] = collect_feed( graph, fbid )
 

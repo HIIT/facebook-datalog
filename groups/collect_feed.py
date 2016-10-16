@@ -53,7 +53,8 @@ for line in open('wave0.txt'):
 
         ## TODO: add group and page metadata collection
 
-        json.dump( data, open( 'data_' + line + '.json', 'w' ) )
+        json.dump( data, open( 'data_' + fbobject['name'].replace(' ', '_').lower() + '.json', 'w' ) )
+
 
     except facebook.GraphAPIError:
         print line, 'failed'

@@ -39,14 +39,19 @@ def collect_feed( graph, id ):
 
     return data.values()
 
-for line in open('wave0.txt'):
+for line in open('wave_test.txt'):
 
     try:
 
         line = line.strip()
         line = line.split('?')[0]
         line = line.split('.com/')[1]
+        ## remove list of bad terms
+        for s in ['groups/']:
+            line = line.replace(s, '')
         line = line.replace('/', '')
+
+        print line
 
         fbobject = graph.get_object(id= line, fields='id,name', metadata = '1')
         fbid = fbobject['id']

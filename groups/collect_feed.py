@@ -43,13 +43,8 @@ def collect_feed( graph, id ):
 
     return data.values()
 
-def collect_photos( graph, id ):
-    return _unfold( graph.get_all_connections( id = id , connection_name='photos' ) )
-
-def collect_group( graph, id, data ):
-    ## items particular to a group
-    data['__members'] = _unfold( graph.get_all_connections( id = id , connection_name='members' ) )
-
+def collect_data( graph, id, endpoint ):
+    return _unfold( graph.get_all_connections( id = id , connection_name=endpoint ) )
 
 for line in open('wave0.txt'):
 
@@ -81,10 +76,10 @@ for line in open('wave0.txt'):
             data['feed'] = collect_feed( graph, fbid )
 
         if fbtype in ['page', 'event']:
-            data['photos'] = collect_photos( graph, fbid )
+            data['photos'] = collect_data( graph, fbid, 'photos' )
 
         if fbtype == 'group':
-            collect_group( graph, fbid, data )
+            data['__members'] = collect_data( graph, fbid, 'members')
 
         ## TODO: add group and page metadata collection
 

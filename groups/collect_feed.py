@@ -46,46 +46,53 @@ def collect_feed( graph, id ):
 def collect_data( graph, id, endpoint ):
     return _unfold( graph.get_all_connections( id = id , connection_name=endpoint ) )
 
-for line in open('wave0.txt'):
 
-    try:
+if __name__ == '__main__':
 
-        line = line.strip()
-        line = line.split('?')[0]
-        line = line.split('.com/')[1]
-        ## remove list of bad terms
-        for s in ['groups/']:
-            line = line.replace(s, '')
-        line = line.replace('/', '')
+    import sys
 
-        print line
+    for f in sys.argv[1:]:
 
-        fbobject = graph.get_object(id= line, fields='id,name', metadata = '1')
-        fbid = fbobject['id']
-        fbtype = fbobject['metadata']['type']
+        for line in open(f):
 
-        data = {}
+            try:
 
-        data['name'] = fbobject['name']
-        data['id'] = fbid
-        data['type'] = fbtype
-        ## todo: store url as well
+                line = line.strip()
+                line = line.split('?')[0]
+                line = line.split('.com/')[1]
+                ## remove list of bad terms
+                for s in ['groups/']:
+                    line = line.replace(s, '')
+                line = line.replace('/', '')
 
-        ## redo for clarity later
-        if fbtype in ['page', 'group', 'event', 'user']:
-            data['feed'] = collect_feed( graph, fbid )
+                print line
 
-        if fbtype in ['page', 'event']:
-            data['photos'] = collect_data( graph, fbid, 'photos' )
+                fbobject = graph.get_object(id= line, fields='id,name', metadata = '1')
+                fbid = fbobject['id']
+                fbtype = fbobject['metadata']['type']
 
-        if fbtype == 'group':
-            data['__members'] = collect_data( graph, fbid, 'members')
+                data = {}
 
-        ## TODO: add group and page metadata collection
+                data['name'] = fbobject['name']
+                data['id'] = fbid
+                data['type'] = fbtype
+                ## todo: store url as well
 
-        json.dump( data, open( 'data/data_' + fbobject['name'].replace(' ', '_').replace('/', '_').lower() + '.json', 'w' ) )
+                ## redo for clarity later
+                if fbtype in ['page', 'group', 'event', 'user']:
+                    data['feed'] = collect_feed( graph, fbid )
+
+                if fbtype in ['page', 'event']:
+                    data['photos'] = collect_data( graph, fbid, 'photos' )
+
+                if fbtype == 'group':
+                    data['__members'] = collect_data( graph, fbid, 'members')
+
+                ## TODO: add group and page metadata collection
+
+                json.dump( data, open( 'data/data_' + fbobject['name'].replace(' ', '_').replace('/', '_').lower() + '.json', 'w' ) )
 
 
-    except facebook.GraphAPIError as e:
-        print line, 'failed'
-        print e
+            except facebook.GraphAPIError as e:
+                print line, 'failed'
+                print e

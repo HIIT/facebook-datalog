@@ -23,8 +23,7 @@ def collect_feed( graph, id ):
     ## TODO: pagination to be added
     data = {}
 
-    posts = graph.get_connections( id = id , connection_name='feed' )
-    posts = posts['data']
+    posts = _unfold( graph.get_all_connections( id = id , connection_name='feed' ) )
 
     for post in posts:
 

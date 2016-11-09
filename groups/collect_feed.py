@@ -20,7 +20,6 @@ def _unfold( generator ): ## TODO: this shoud not be needed really
 def collect_feed( graph, id ):
 
     ## collect posts
-    ## TODO: pagination to be added
     data = {}
 
     posts = _unfold( graph.get_all_connections( id = id , connection_name='feed' ) )
@@ -31,14 +30,17 @@ def collect_feed( graph, id ):
             fields ='id,from,created_time,application,description,message,to,updated_time'
         ) ## to be compleated
 
-
-
         data[ post['id'] ][ '__comments' ] = _unfold( graph.get_all_connections( id = post['id'], connection_name='comments' ) )
         data[ post['id'] ][ '_likes' ] = _unfold( graph.get_all_connections( id = post['id'], connection_name='likes' ) )
 
     return data.values()
 
-for line in open('wave_test.txt'):
+def collect_group( graph, id, data ):
+    ## items particular to a group
+    data['__members'] = _unfold( graph.get_all_connections( id = id , connection_name='members' ) )
+
+
+for line in open('wave_1.txt'):
 
     try:
 
@@ -65,6 +67,9 @@ for line in open('wave_test.txt'):
 
         if fbtype in ['page', 'group', 'event', 'user']:
             data['feed'] = collect_feed( graph, fbid )
+
+        if fbtype == 'group':
+            collect_group( graph, fbid, data )
 
         ## TODO: add group and page metadata collection
 

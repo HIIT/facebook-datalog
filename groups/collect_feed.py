@@ -43,6 +43,9 @@ def collect_feed( graph, id ):
 
     return data.values()
 
+def collect_photos( graph, id ):
+    return _unfold( graph.get_all_connections( id = id , connection_name='photos' ) )
+
 def collect_group( graph, id, data ):
     ## items particular to a group
     data['__members'] = _unfold( graph.get_all_connections( id = id , connection_name='members' ) )
@@ -73,8 +76,12 @@ for line in open('wave0.txt'):
         data['type'] = fbtype
         ## todo: store url as well
 
+        ## redo for clarity later
         if fbtype in ['page', 'group', 'event', 'user']:
             data['feed'] = collect_feed( graph, fbid )
+
+        if fbtype in ['page', 'event']:
+            data['photos'] = collect_photos( graph, fbid )
 
         if fbtype == 'group':
             collect_group( graph, fbid, data )
@@ -84,5 +91,6 @@ for line in open('wave0.txt'):
         json.dump( data, open( 'data/data_' + fbobject['name'].replace(' ', '_').replace('/', '_').lower() + '.json', 'w' ) )
 
 
-    except facebook.GraphAPIError:
+    except facebook.GraphAPIError as e:
         print line, 'failed'
+        print e

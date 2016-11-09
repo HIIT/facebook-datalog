@@ -52,12 +52,20 @@ if __name__ == '__main__':
     import sys
     import datetime
 
+    def show_status(now, count): ## use courses some day
+        percentage = 100.0 * now / count
+        sys.stdout.write("%3d%%\r" % percentage )
+        sys.stdout.flush()
+
     for f in sys.argv[1:]:
 
-        for url in open(f):
+        count = len( open(f).readlines() )
+
+        for i, url in enumerate( open(f) ):
+
+            show_status( i, count )
 
             try:
-
                 url = url.strip()
                 fbid = url.split('?')[0]
                 fbid = fbid.split('.com/')[1]

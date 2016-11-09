@@ -50,24 +50,24 @@ def collect_data( graph, id, endpoint ):
 if __name__ == '__main__':
 
     import sys
+    import datetime
 
     for f in sys.argv[1:]:
 
-        for line in open(f):
+        for url in open(f):
 
             try:
 
-                line = line.strip()
-                line = line.split('?')[0]
-                line = line.split('.com/')[1]
+                url = url.strip()
+                fbid = url.split('?')[0]
+                fbid = fbid.split('.com/')[1]
                 ## remove list of bad terms
                 for s in ['groups/']:
-                    line = line.replace(s, '')
-                line = line.replace('/', '')
+                    fbid = fbid.replace(s, '')
+                fbid = fbid.replace('/', '')
 
-                print line
 
-                fbobject = graph.get_object(id= line, fields='id,name', metadata = '1')
+                fbobject = graph.get_object(id= fbid, fields='id,name', metadata = '1')
                 fbid = fbobject['id']
                 fbtype = fbobject['metadata']['type']
 
@@ -75,7 +75,12 @@ if __name__ == '__main__':
 
                 data['name'] = fbobject['name']
                 data['id'] = fbid
-                data['type'] = fbtype
+                data['meta'] = {}
+                data['meta']['type'] = fbtype
+                data['meta']['url'] = url
+                data['meta']['input_file'] = f
+                data['meta']['timestamp'] = str( datetime.datetime.now() ) ## when data was collected
+
                 ## todo: store url as well
 
                 ## redo for clarity later
@@ -94,5 +99,5 @@ if __name__ == '__main__':
 
 
             except facebook.GraphAPIError as e:
-                print line, 'failed'
+                print url, 'failed'
                 print e

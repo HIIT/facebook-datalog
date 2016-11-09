@@ -9,6 +9,8 @@ keys = json.load( open('keys.json') )
 app_id = keys['app-id']
 app_secret = keys['app-secret']
 
+__DEV__ = True ## Flag to test if we're running a development thing => limit the amount of data collected from feeds
+
 graph = facebook.GraphAPI(access_token= app_id + '|' + app_secret, version='2.7')
 
 def _unfold( generator ): ## TODO: this shoud not be needed really
@@ -22,7 +24,13 @@ def collect_feed( graph, id ):
     ## collect posts
     data = {}
 
-    posts = _unfold( graph.get_all_connections( id = id , connection_name='feed' ) )
+    if __DEV__:
+
+        posts = graph.get_connections( id = id , connection_name='feed' ) ## approximately 25
+        posts = posts['data']
+
+    else:
+        posts = _unfold( graph.get_all_connections( id = id , connection_name='feed' ) )
 
     for post in posts:
 
@@ -40,7 +48,7 @@ def collect_group( graph, id, data ):
     data['__members'] = _unfold( graph.get_all_connections( id = id , connection_name='members' ) )
 
 
-for line in open('wave_1.txt'):
+for line in open('wave0.txt'):
 
     try:
 

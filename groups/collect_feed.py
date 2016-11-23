@@ -9,15 +9,9 @@ keys = json.load( open('keys.json') )
 app_id = keys['app-id']
 app_secret = keys['app-secret']
 
-__DEV__ = True ## Flag to test if we're running a development thing => limit the amount of data collected from feeds
+__DEV__ = False ## True ## Flag to test if we're running a development thing => limit the amount of data collected from feeds
 
 graph = facebook.GraphAPI(access_token= app_id + '|' + app_secret, version='2.7')
-
-def _unfold( generator ): ## TODO: this shoud not be needed really
-    r = []
-    for i in generator:
-        r.append( i )
-    return r
 
 def collect_feed( graph, id ):
 
@@ -30,21 +24,40 @@ def collect_feed( graph, id ):
         posts = posts['data']
 
     else:
-        posts = _unfold( graph.get_all_connections( id = id , connection_name='feed' ) )
+        posts = collect_data( graph, id , 'feed' )
+
+    print len( posts )
 
     for post in posts:
 
-        data[ post['id'] ] =  graph.get_object( post['id'] ,
-            fields ='id,from,created_time,application,description,message,to,updated_time'
-        ) ## to be compleated
+        try:
 
-        data[ post['id'] ][ '__comments' ] = _unfold( graph.get_all_connections( id = post['id'], connection_name='comments' ) )
-        data[ post['id'] ][ '_likes' ] = _unfold( graph.get_all_connections( id = post['id'], connection_name='likes' ) )
+            data[ post['id'] ] =  graph.get_object( post['id'] ,
+                fields ='id,from,created_time,application,description,message,to,updated_time'
+            ) ## to be compleated
+
+            data[ post['id'] ][ '__comments' ] = collect_data( graph, post['id'], 'comments' )
+            data[ post['id'] ][ '_likes' ] = collect_data( graph, post['id'], 'likes' )
+
+        except facebook.GraphAPIError as e:
+            print e
+            data[ post['id'] ] = { 'id' : post['id']  }
 
     return data.values()
 
 def collect_data( graph, id, endpoint ):
-    return _unfold( graph.get_all_connections( id = id , connection_name=endpoint ) )
+    ret = []
+
+    try:
+        d = graph.get_all_connections( id = id , connection_name=endpoint )
+        for _d in d:
+            ret.append( _d )
+    except facebook.GraphAPIError as e:
+        print e
+
+    finally:
+        return ret
+
 
 
 if __name__ == '__main__':
@@ -54,7 +67,7 @@ if __name__ == '__main__':
 
     def show_status(now, count): ## use courses some day
         percentage = 100.0 * now / count
-        sys.stdout.write("%3d%%\r" % percentage )
+        sys.stdout.write( '****' + str( now ) )
         sys.stdout.flush()
 
     for f in sys.argv[1:]:
@@ -103,8 +116,7 @@ if __name__ == '__main__':
 
                 ## TODO: add group and page metadata collection
 
-                json.dump( data, open( 'data/data_' + fbobject['name'].replace(' ', '_').replace('/', '_').lower() + '.json', 'w' ) )
-
+                json.dump( data, open( 'data/data_' + fbobject['name'].replace(' ', '_').replace('/', '_').lower() + '.json', 'w' ), sort_keys=True, indent=4 )
 
             except facebook.GraphAPIError as e:
                 print url, 'failed'

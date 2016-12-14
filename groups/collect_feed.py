@@ -109,11 +109,11 @@ if __name__ == '__main__':
 
     for i, filename in enumerate( sys.argv[1:] ):
 
-        jj = len( open(filename) )
+        jj = len( open(filename).readlines() )
 
         for j, url in enumerate( open(filename) ):
 
-            print "File", i, "of", ii, "entry", j, "of", jj
+            print "File", (i+1), "of", ii, "entry", (j+1), "of", jj
 
             url = url.strip()
             fbid = url.split('?')[0]

@@ -78,23 +78,9 @@ def collect_basics( fbid ):
         data['id'] = fbid
         data['meta'] = {}
         data['meta']['type'] = fbtype
-        data['meta']['url'] = url
+        ## data['meta']['url'] = url         ## todo: store url as well
         data['meta']['input_file'] = f
         data['meta']['timestamp'] = str( datetime.datetime.now() ) ## when data was collected
-
-        ## todo: store url as well
-
-        ## redo for clarity later
-        if fbtype in ['page', 'group', 'event', 'user']:
-            data['feed'] = collect_feed( graph, fbid )
-
-        if fbtype in ['page', 'event']:
-            data['photos'] = collect_data( graph, fbid, 'photos' )
-
-        if fbtype == 'group':
-            data['members'] = collect_data( graph, fbid, 'members')
-
-        ## TODO: add group and page metadata collection
 
         return data
 
@@ -133,5 +119,17 @@ if __name__ == '__main__':
             fbid = fbid.replace('/', '')
 
             data = collect_basics( fbid )
+
+            fbtype = data['meta']['type']
+            if fbtype in ['page', 'group', 'event', 'user']:
+                data['feed'] = collect_feed( graph, fbid )
+
+            if fbtype in ['page', 'event']:
+                data['photos'] = collect_data( graph, fbid, 'photos' )
+
+            if fbtype == 'group':
+                data['members'] = collect_data( graph, fbid, 'members')
+
+            ## TODO: add group and page metadata collection
 
             json.dump( data, open( 'data/data_' + fbobject['name'].replace(' ', '_').replace('/', '_').lower() + '.json', 'w' ), sort_keys=True, indent=4 )

@@ -95,11 +95,15 @@ if __name__ == '__main__':
     import sys
     import datetime
 
+    ii = len( sys.argv[1:] )
+
     for i, filename in enumerate( sys.argv[1:] ):
+
+        jj = len( open(filename) )
 
         for j, url in enumerate( open(filename) ):
 
-            print "File", i, "entry", j
+            print "File", i, "of", ii, "entry", j, "of", jj
 
             url = url.strip()
             fbid = url.split('?')[0]

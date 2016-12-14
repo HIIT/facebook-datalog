@@ -36,8 +36,8 @@ def collect_feed( graph, id ):
                 fields ='id,from,created_time,application,description,message,to,updated_time'
             ) ## to be compleated
 
-            data[ post['id'] ][ '__comments' ] = collect_data( graph, post['id'], 'comments' )
-            data[ post['id'] ][ '_likes' ] = collect_data( graph, post['id'], 'likes' )
+            data[ post['id'] ][ 'comments' ] = collect_data( graph, post['id'], 'comments' )
+            data[ post['id'] ][ 'likes' ] = collect_data( graph, post['id'], 'likes' )
 
         except facebook.GraphAPIError as e:
             print e
@@ -112,7 +112,7 @@ if __name__ == '__main__':
                     data['photos'] = collect_data( graph, fbid, 'photos' )
 
                 if fbtype == 'group':
-                    data['__members'] = collect_data( graph, fbid, 'members')
+                    data['members'] = collect_data( graph, fbid, 'members')
 
                 ## TODO: add group and page metadata collection
 

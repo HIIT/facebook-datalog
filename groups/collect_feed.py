@@ -95,18 +95,11 @@ if __name__ == '__main__':
     import sys
     import datetime
 
-    def show_status(now, count): ## use courses some day
-        percentage = 100.0 * now / count
-        sys.stdout.write( '****' + str( now ) )
-        sys.stdout.flush()
+    for i, filename in enumerate( sys.argv[1:] ):
 
-    for f in sys.argv[1:]:
+        for j, url in enumerate( open(filename) ):
 
-        count = len( open(f).readlines() )
-
-        for i, url in enumerate( open(f) ):
-
-            show_status( i, count )
+            print "File", i, "entry", j
 
             url = url.strip()
             fbid = url.split('?')[0]

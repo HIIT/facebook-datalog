@@ -1,2 +1,6 @@
 ## Do not store any data
 *.json
+*.txt
+
+*.pyc
+.DS_Store

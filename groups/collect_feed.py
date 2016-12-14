@@ -14,7 +14,12 @@ __DEV__ = False ## True ## Flag to test if we're running a development thing => 
 
 graph = facebook.GraphAPI(access_token= app_id + '|' + app_secret, version='2.7')
 
+log = open('error.log', 'w')
+
 def handle_fb_errors( e , redo ):
+
+    log.write( str(e) + '\n' )
+
     if e.code in [4, 17, 341]: ## application limit errors
         time.sleep( 60 * 60 ) ## one hour
         redo()

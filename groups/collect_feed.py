@@ -77,7 +77,7 @@ def collect_basics( fbid ):
         data['meta'] = {}
         data['meta']['type'] = fbtype
         ## data['meta']['url'] = url         ## todo: store url as well
-        data['meta']['input_file'] = f
+        ## data['meta']['input_file'] = f
         data['meta']['collection_time'] = str( datetime.datetime.now() ) ## when data was collected
 
         return data
@@ -109,6 +109,8 @@ if __name__ == '__main__':
                 fbid = fbid.replace(s, '')
             fbid = fbid.replace('/', '')
 
+            ## data collection starts here
+
             data = collect_basics( fbid )
 
             fbtype = data['meta']['type']
@@ -123,4 +125,4 @@ if __name__ == '__main__':
 
             ## TODO: add group and page metadata collection
 
-            json.dump( data, open( 'data/data_' + fbobject['name'].replace(' ', '_').replace('/', '_').lower() + '.json', 'w' ), sort_keys=True, indent=4 )
+            json.dump( data, open( 'data/data_' + data['name'].replace(' ', '_').replace('/', '_').lower() + '.json', 'w' ), sort_keys=True, indent=4 )

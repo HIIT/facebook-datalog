@@ -47,7 +47,9 @@ def collect_feed( fbid ):
             data[ post['id'] ][ 'likes' ] = collect_endpoint( post['id'], 'likes' )
 
         except facebook.GraphAPIError as e:
-            handle_fb_errors( e, lambda: data[ post['id'] ] = { 'id' : post['id']  } )
+            def f():
+                data[ post['id'] ] = { 'id' : post['id']  }
+            handle_fb_errors( e, f )
 
     return data.values()
 

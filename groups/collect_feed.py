@@ -4,6 +4,7 @@ sys.path.insert( 0, '/Users/mnelimar/code/facebook-sdk/' ) ## temporary hack to 
 import facebook
 import requests
 import json
+import time
 
 keys = json.load( open('keys.json') )
 app_id = keys['app-id']
@@ -53,11 +54,56 @@ def collect_data( graph, id, endpoint ):
         for _d in d:
             ret.append( _d )
     except facebook.GraphAPIError as e:
-        print e
+        if e.code in [4, 17, 341]: ## application limit errors
+            time.sleep( 60 * 60 ) ## one hour
+            return collect_data( graph, id, endpoint )
+        else:
+            print "Error", e
 
     finally:
         return ret
 
+
+def collect_basics( fbid ):
+
+    try:
+
+        fbobject = graph.get_object(id= fbid, fields='id,name', metadata = '1')
+        fbid = fbobject['id']
+        fbtype = fbobject['metadata']['type']
+
+        data = {}
+
+        data['name'] = fbobject['name']
+        data['id'] = fbid
+        data['meta'] = {}
+        data['meta']['type'] = fbtype
+        data['meta']['url'] = url
+        data['meta']['input_file'] = f
+        data['meta']['timestamp'] = str( datetime.datetime.now() ) ## when data was collected
+
+        ## todo: store url as well
+
+        ## redo for clarity later
+        if fbtype in ['page', 'group', 'event', 'user']:
+            data['feed'] = collect_feed( graph, fbid )
+
+        if fbtype in ['page', 'event']:
+            data['photos'] = collect_data( graph, fbid, 'photos' )
+
+        if fbtype == 'group':
+            data['members'] = collect_data( graph, fbid, 'members')
+
+        ## TODO: add group and page metadata collection
+
+        return data
+
+    except facebook.GraphAPIError as e:
+        if e.code in [4, 17, 341]: ## application limit errors
+            time.sleep( 60 * 60 ) ## one hour
+            return collect_data( graph, id, endpoint )
+        else:
+            print "Error", e
 
 
 if __name__ == '__main__':
@@ -78,46 +124,14 @@ if __name__ == '__main__':
 
             show_status( i, count )
 
-            try:
-                url = url.strip()
-                fbid = url.split('?')[0]
-                fbid = fbid.split('.com/')[1]
-                ## remove list of bad terms
-                for s in ['groups/']:
-                    fbid = fbid.replace(s, '')
-                fbid = fbid.replace('/', '')
+            url = url.strip()
+            fbid = url.split('?')[0]
+            fbid = fbid.split('.com/')[1]
+            ## remove list of bad terms
+            for s in ['groups/']:
+                fbid = fbid.replace(s, '')
+            fbid = fbid.replace('/', '')
 
+            data = collect_basics( fbid )
 
-                fbobject = graph.get_object(id= fbid, fields='id,name', metadata = '1')
-                fbid = fbobject['id']
-                fbtype = fbobject['metadata']['type']
-
-                data = {}
-
-                data['name'] = fbobject['name']
-                data['id'] = fbid
-                data['meta'] = {}
-                data['meta']['type'] = fbtype
-                data['meta']['url'] = url
-                data['meta']['input_file'] = f
-                data['meta']['timestamp'] = str( datetime.datetime.now() ) ## when data was collected
-
-                ## todo: store url as well
-
-                ## redo for clarity later
-                if fbtype in ['page', 'group', 'event', 'user']:
-                    data['feed'] = collect_feed( graph, fbid )
-
-                if fbtype in ['page', 'event']:
-                    data['photos'] = collect_data( graph, fbid, 'photos' )
-
-                if fbtype == 'group':
-                    data['members'] = collect_data( graph, fbid, 'members')
-
-                ## TODO: add group and page metadata collection
-
-                json.dump( data, open( 'data/data_' + fbobject['name'].replace(' ', '_').replace('/', '_').lower() + '.json', 'w' ), sort_keys=True, indent=4 )
-
-            except facebook.GraphAPIError as e:
-                print url, 'failed'
-                print e
+            json.dump( data, open( 'data/data_' + fbobject['name'].replace(' ', '_').replace('/', '_').lower() + '.json', 'w' ), sort_keys=True, indent=4 )

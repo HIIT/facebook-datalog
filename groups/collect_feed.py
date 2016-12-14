@@ -101,7 +101,7 @@ def collect_basics( fbid ):
     except facebook.GraphAPIError as e:
         if e.code in [4, 17, 341]: ## application limit errors
             time.sleep( 60 * 60 ) ## one hour
-            return collect_data( graph, id, endpoint )
+            return collect_basics( fbid )
         else:
             print "Error", e
 

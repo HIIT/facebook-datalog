@@ -78,7 +78,7 @@ def collect_basics( fbid ):
         data['meta']['type'] = fbtype
         ## data['meta']['url'] = url         ## todo: store url as well
         data['meta']['input_file'] = f
-        data['meta']['timestamp'] = str( datetime.datetime.now() ) ## when data was collected
+        data['meta']['collection_time'] = str( datetime.datetime.now() ) ## when data was collected
 
         return data
 

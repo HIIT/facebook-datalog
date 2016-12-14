@@ -44,6 +44,9 @@ def collect_feed( fbid ):
             ) ## to be compleated
 
             data[ post['id'] ][ 'comments' ] = collect_endpoint( post['id'], 'comments' )
+
+            ## TODO: collect likes of comments etc
+
             data[ post['id'] ][ 'likes' ] = collect_endpoint( post['id'], 'likes' )
 
         except facebook.GraphAPIError as e:
@@ -89,6 +92,8 @@ def collect_basics( fbid ):
 
     except facebook.GraphAPIError as e:
         handle_fb_errors( e , lambda: collect_basics( fbid ) )
+        ## if we end up here, there wasn't anything esle to execute -> return False
+        return False
 
 if __name__ == '__main__':
 
@@ -117,16 +122,18 @@ if __name__ == '__main__':
 
             data = collect_basics( fbid )
 
-            fbtype = data['meta']['type']
-            if fbtype in ['page', 'group', 'event', 'user']:
-                data['feed'] = collect_feed( fbid )
+            if data:
 
-            if fbtype in ['page', 'event']:
-                data['photos'] = collect_endpoint( fbid, 'photos' )
+                fbtype = data['meta']['type']
+                if fbtype in ['page', 'group', 'event', 'user']:
+                    data['feed'] = collect_feed( fbid )
 
-            if fbtype == 'group':
-                data['members'] = collect_endpoint( fbid, 'members')
+                if fbtype in ['page', 'event']:
+                    data['photos'] = collect_endpoint( fbid, 'photos' )
 
-            ## TODO: add group and page metadata collection
+                if fbtype == 'group':
+                    data['members'] = collect_endpoint( fbid, 'members')
 
-            json.dump( data, open( 'data/data_' + data['name'].replace(' ', '_').replace('/', '_').lower() + '.json', 'w' ), sort_keys=True, indent=4 )
+                ## TODO: add group and page metadata collection
+
+                json.dump( data, open( 'data/data_' + data['name'].replace(' ', '_').replace('/', '_').lower() + '.json', 'w' ), sort_keys=True, indent=4 )

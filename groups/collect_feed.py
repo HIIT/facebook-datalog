@@ -14,6 +14,14 @@ __DEV__ = False ## True ## Flag to test if we're running a development thing => 
 
 graph = facebook.GraphAPI(access_token= app_id + '|' + app_secret, version='2.7')
 
+def handle_fb_errors( e , redo ):
+    if e.code in [4, 17, 341]: ## application limit errors
+        time.sleep( 60 * 60 ) ## one hour
+        redo()
+    else:
+        print "Error", e
+
+
 def collect_feed( fbid ):
 
     ## collect posts
@@ -39,8 +47,7 @@ def collect_feed( fbid ):
             data[ post['id'] ][ 'likes' ] = collect_endpoint( post['id'], 'likes' )
 
         except facebook.GraphAPIError as e:
-            print e
-            data[ post['id'] ] = { 'id' : post['id']  }
+            handle_fb_errors( e, lambda: data[ post['id'] ] = { 'id' : post['id']  } )
 
     return data.values()
 
@@ -51,15 +58,11 @@ def collect_endpoint( fbid, endpoint ):
         d = graph.get_all_connections( id = fbid , connection_name=endpoint )
         for _d in d:
             ret.append( _d )
-    except facebook.GraphAPIError as e:
-        if e.code in [4, 17, 341]: ## application limit errors
-            time.sleep( 60 * 60 ) ## one hour
-            return collect_endpoint( fbid, endpoint )
-        else:
-            print "Error", e
 
-    finally:
         return ret
+
+    except facebook.GraphAPIError as e:
+        handle_fb_errors( e , lambda:  collect_endpoint( fbid, endpoint ) )
 
 
 def collect_basics( fbid ):
@@ -83,12 +86,7 @@ def collect_basics( fbid ):
         return data
 
     except facebook.GraphAPIError as e:
-        if e.code in [4, 17, 341]: ## application limit errors
-            time.sleep( 60 * 60 ) ## one hour
-            return collect_basics( fbid )
-        else:
-            print "Error", e
-
+        handle_fb_errors( e , lambda: collect_basics( fbid ) )
 
 if __name__ == '__main__':
 

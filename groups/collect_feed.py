@@ -25,7 +25,7 @@ def collect_feed( fbid ):
         posts = posts['data']
 
     else:
-        posts = collect_data( fbid , 'feed' )
+        posts = collect_endpoint( fbid , 'feed' )
 
     for post in posts:
 
@@ -35,8 +35,8 @@ def collect_feed( fbid ):
                 fields ='id,from,created_time,application,description,message,to,updated_time'
             ) ## to be compleated
 
-            data[ post['id'] ][ 'comments' ] = collect_data( post['id'], 'comments' )
-            data[ post['id'] ][ 'likes' ] = collect_data( post['id'], 'likes' )
+            data[ post['id'] ][ 'comments' ] = collect_endpoint( post['id'], 'comments' )
+            data[ post['id'] ][ 'likes' ] = collect_endpoint( post['id'], 'likes' )
 
         except facebook.GraphAPIError as e:
             print e
@@ -44,7 +44,7 @@ def collect_feed( fbid ):
 
     return data.values()
 
-def collect_data( fbid, endpoint ):
+def collect_endpoint( fbid, endpoint ):
     ret = []
 
     try:
@@ -54,7 +54,7 @@ def collect_data( fbid, endpoint ):
     except facebook.GraphAPIError as e:
         if e.code in [4, 17, 341]: ## application limit errors
             time.sleep( 60 * 60 ) ## one hour
-            return collect_data( fbid, endpoint )
+            return collect_endpoint( fbid, endpoint )
         else:
             print "Error", e
 
@@ -118,10 +118,10 @@ if __name__ == '__main__':
                 data['feed'] = collect_feed( fbid )
 
             if fbtype in ['page', 'event']:
-                data['photos'] = collect_data( fbid, 'photos' )
+                data['photos'] = collect_endpoint( fbid, 'photos' )
 
             if fbtype == 'group':
-                data['members'] = collect_data( fbid, 'members')
+                data['members'] = collect_endpoint( fbid, 'members')
 
             ## TODO: add group and page metadata collection
 

@@ -22,6 +22,7 @@ def handle_fb_errors( e , redo ):
 
     if e.code in [4, 17, 341]: ## application limit errors
         time.sleep( 60 * 60 ) ## one hour
+        print "Sleeping: API says no"
         redo()
     else:
         print "Error", e
@@ -32,10 +33,13 @@ def collect_feed( fbid ):
     ## collect posts
     data = {}
 
-    fields = 'id,from,created_time,application,description,message,to,updated_time,' +
-    'likes{},' +
-    'comments{id,from,created_time,message,updated_time,likes{},comments{id,from,created_time,message,updated_time,likes{}}}'
+    fields = """id,from,created_time,application,description,message,to,updated_time,
+    likes{},
+    comments{id,from,created_time,message,updated_time,likes{},comments{id,from,created_time,message,updated_time,likes{}}}"""
     ## check this is everything required
+
+
+    fields.replace('\n', '' )
 
     if __DEV__:
 
@@ -47,11 +51,11 @@ def collect_feed( fbid ):
 
     return posts ## todo: postprocess
 
-def collect_endpoint( fbid, endpoint ):
+def collect_endpoint( fbid, endpoint, fields = None ):
     ret = []
 
     try:
-        d = graph.get_all_connections( id = fbid , connection_name=endpoint )
+        d = graph.get_all_connections( id = fbid , connection_name=endpoint, fields = fields )
         for _d in d:
             ret.append( _d )
 
@@ -134,4 +138,5 @@ if __name__ == '__main__':
                 collect_counter += 1
 
                 if collect_counter % 20 == 0:
+                    print "Sleeping: Time to relax"
                     time.sleep( 60 * 60 ) ## relax loading speed

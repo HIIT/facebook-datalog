@@ -91,6 +91,8 @@ if __name__ == '__main__':
     import sys
     import datetime
 
+    collect_counter = 0
+
     ii = len( sys.argv[1:] )
 
     for i, filename in enumerate( sys.argv[1:] ):
@@ -128,3 +130,8 @@ if __name__ == '__main__':
                 ## TODO: add group and page metadata collection
 
                 json.dump( data, open( 'data/data_' + data['name'].replace(' ', '_').replace('/', '_').lower() + '.json', 'w' ), sort_keys=True, indent=4 )
+
+                collect_counter += 1
+
+                if collect_counter % 20 == 0:
+                    time.sleep( 60 * 60 ) ## relax loading speed

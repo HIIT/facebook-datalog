@@ -32,34 +32,20 @@ def collect_feed( fbid ):
     ## collect posts
     data = {}
 
+    fields = 'id,from,created_time,application,description,message,to,updated_time,' +
+    'likes{},' +
+    'comments{id,from,created_time,message,updated_time,likes{},comments{id,from,created_time,message,updated_time,likes{}}}'
+    ## check this is everything required
+
     if __DEV__:
 
-        posts = graph.get_connections( id = fbid , connection_name='feed' ) ## approximately 25
+        posts = graph.get_connections( id = fbid , connection_name='feed', fields = fields ) ## approximately 25
         posts = posts['data']
 
     else:
-        posts = collect_endpoint( fbid , 'feed' )
+        posts = collect_endpoint( fbid , 'feed', fields = fields )
 
-    for post in posts:
-
-        try:
-
-            data[ post['id'] ] =  graph.get_object( post['id'] ,
-                fields ='id,from,created_time,application,description,message,to,updated_time'
-            ) ## to be compleated
-
-            data[ post['id'] ][ 'comments' ] = collect_endpoint( post['id'], 'comments' )
-
-            ## TODO: collect likes of comments etc
-
-            data[ post['id'] ][ 'likes' ] = collect_endpoint( post['id'], 'likes' )
-
-        except facebook.GraphAPIError as e:
-            def f():
-                data[ post['id'] ] = { 'id' : post['id']  }
-            handle_fb_errors( e, f )
-
-    return data.values()
+    return posts ## todo: postprocess
 
 def collect_endpoint( fbid, endpoint ):
     ret = []

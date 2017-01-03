@@ -33,21 +33,34 @@ def collect_feed( fbid ):
     ## collect posts
     data = {}
 
-    fields = """id,from,created_time,application,description,message,to,updated_time,
-    likes{},
-    comments{id,from,created_time,message,updated_time,likes{},comments{id,from,created_time,message,updated_time,likes{}}}"""
-    ## check this is everything required
-
-
-    fields.replace('\n', '' )
+    commentfields = """id,from,created_time,message,updated_time,
+    likes.limit(5000){},
+    comments.limit(5000){id,from,created_time,message,updated_time,likes{},limit=1000}"""
+    postfields = """id,from,created_time,application,description,message,to,updated_time,
+    likes.limit(5000),
+    comments.limit(5000){""" + commentfields + "}"
+    ## XXX: check this is everything required
 
     if __DEV__:
 
-        posts = graph.get_connections( id = fbid , connection_name='feed', fields = fields ) ## approximately 25
+        posts = graph.get_connections( id = fbid , connection_name='feed', fields = postfields ) ## approximately 25
         posts = posts['data']
 
     else:
-        posts = collect_endpoint( fbid , 'feed', fields = fields )
+        posts = collect_endpoint( fbid , 'feed', fields = postfields )
+
+    ## check which posts have so many comments that we need to continue loading data from those
+    for post in posts:
+
+        if 'comments' not in post: ## no comments on this post, just add the field
+            post['comments'] = []
+
+        elif 'next' in post['comments']['paging']: ## there is more data to collect!
+            post['comments'] = collect_endpoint( post['id'], 'comments', commentfields )
+
+        else:
+            post['comments'] = post['comments']['data'] ## remove pagination information
+
 
     return posts ## todo: postprocess
 

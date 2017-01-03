@@ -28,17 +28,35 @@ def handle_fb_errors( e , redo ):
         print "Error", e
 
 
+def __collect_part_of_feed( post, field ):
+    if field not in post: ## no comments on this post, just add the field
+        post[ field ] = []
+
+    elif 'next' in post[ field ]['paging']: ## there is more data to collect!
+
+        if field == 'comments':
+            post[ field ] = collect_endpoint( post['id'], field, commentfields )
+        else:
+            post[ field ] = collect_endpoint( post['id'], field )
+
+    else:
+        post[ field ] = post[ field ]['data'] ## remove pagination information
+
 def collect_feed( fbid ):
 
     ## collect posts
     data = {}
 
-    commentfields = """id,from,created_time,message,updated_time,
+    commentfields = """id,from,created_time,message,updated_time,permalink_url,
+    attachment,object,
     likes.limit(5000){},
-    comments.limit(5000){id,from,created_time,message,updated_time,likes{},limit=1000}"""
-    postfields = """id,from,created_time,application,description,message,to,updated_time,
+    comments.limit(5000){id,from,created_time,message,updated_time,likes.limit(5000){}}"""
+    postfields = """id,from,created_time,application,description,message,to,updated_time,permalink_url,type,
+    caption,description,link,message_tags,picture,status_type,shares,story,to,
     likes.limit(5000),
-    comments.limit(5000){""" + commentfields + "}"
+    comments.limit(5000){""" + commentfields + """},
+    reactions.limit(5000),
+    attachments,sharedposts"""
     ## XXX: check this is everything required
 
     if __DEV__:
@@ -50,19 +68,19 @@ def collect_feed( fbid ):
         posts = collect_endpoint( fbid , 'feed', fields = postfields )
 
     ## check which posts have so many comments that we need to continue loading data from those
+    ## also checks that data has fields defined and sets them as empty list if there is no such field
     for post in posts:
 
-        if 'comments' not in post: ## no comments on this post, just add the field
-            post['comments'] = []
+        __collect_part_of_feed( post, 'comments' )
+        __collect_part_of_feed( post, 'likes' )
+        __collect_part_of_feed( post, 'reactions' )
 
-        elif 'next' in post['comments']['paging']: ## there is more data to collect!
-            post['comments'] = collect_endpoint( post['id'], 'comments', commentfields )
+        for comment in post['comments']:
+            __collect_part_of_feed( comment, 'comments' )
+            __collect_part_of_feed( comment, 'likes' )
+            __collect_part_of_feed( comment, 'reactions' )
 
-        else:
-            post['comments'] = post['comments']['data'] ## remove pagination information
-
-
-    return posts ## todo: postprocess
+    return posts
 
 def collect_endpoint( fbid, endpoint, fields = None ):
     ret = []

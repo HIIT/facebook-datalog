@@ -168,6 +168,6 @@ if __name__ == '__main__':
 
                 collect_counter += 1
 
-                if collect_counter % 20 == 0:
+                if collect_counter % 50 == 0:
                     print "Sleeping: Time to relax"
                     time.sleep( 60 * 60 ) ## relax loading speed

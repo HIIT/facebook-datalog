@@ -27,15 +27,56 @@ def handle_fb_errors( e , redo ):
     else:
         print "Error", e
 
+## XXX: TODO: fix this mess
+___scale = '30'
+__commentfields = [
+    'id',
+    'from',
+    'application',
+    'created_time',
+    'message',
+    'updated_time',
+    'permalink_url',
+    'attachment',
+    'object',
+    'likes.limit(' + ___scale + '){}',
+    'comments.limit(' + ___scale + '){id,from,created_time,message,updated_time,likes.limit(' + ___scale + '){}}'
+]
+__commentfields = ','.join( __commentfields )
+
+__postfields = [
+    'id',
+    'from',
+    'created_time',
+    'message',
+    'updated_time',
+    'permalink_url,type',
+    'caption',
+    'description',
+    'story',
+    'link',
+    'message_tags',
+    'picture',
+    'status_type',
+    'to',
+    'likes.limit(' + ___scale + ')',
+    'comments.limit(' + ___scale + '){' + __commentfields + '}',
+    'reactions.limit(' + ___scale + ')',
+    'attachments',
+    'sharedposts.limit(' + ___scale + ')'
+]
+
+__postfields = ','.join( __postfields )
 
 def __collect_part_of_feed( post, field ):
+
     if field not in post: ## no comments on this post, just add the field
         post[ field ] = []
 
     elif 'next' in post[ field ]['paging']: ## there is more data to collect!
 
         if field == 'comments':
-            post[ field ] = collect_endpoint( post['id'], field, commentfields )
+            post[ field ] = collect_endpoint( post['id'], field, __commentfields )
         else:
             post[ field ] = collect_endpoint( post['id'], field )
 
@@ -47,25 +88,15 @@ def collect_feed( fbid ):
     ## collect posts
     data = {}
 
-    commentfields = """id,from,created_time,message,updated_time,permalink_url,
-    attachment,object,
-    likes.limit(5000){},
-    comments.limit(5000){id,from,created_time,message,updated_time,likes.limit(5000){}}"""
-    postfields = """id,from,created_time,application,description,message,to,updated_time,permalink_url,type,
-    caption,description,link,message_tags,picture,status_type,shares,story,to,
-    likes.limit(5000),
-    comments.limit(5000){""" + commentfields + """},
-    reactions.limit(5000),
-    attachments,sharedposts"""
     ## XXX: check this is everything required
 
     if __DEV__:
 
-        posts = graph.get_connections( id = fbid , connection_name='feed', fields = postfields ) ## approximately 25
+        posts = graph.get_connections( id = fbid , connection_name='feed', fields = __postfields ) ## approximately 25
         posts = posts['data']
 
     else:
-        posts = collect_endpoint( fbid , 'feed', fields = postfields )
+        posts = collect_endpoint( fbid , 'feed', fields = __postfields )
 
     ## check which posts have so many comments that we need to continue loading data from those
     ## also checks that data has fields defined and sets them as empty list if there is no such field
@@ -74,11 +105,11 @@ def collect_feed( fbid ):
         __collect_part_of_feed( post, 'comments' )
         __collect_part_of_feed( post, 'likes' )
         __collect_part_of_feed( post, 'reactions' )
+        __collect_part_of_feed( post, 'sharedposts' )
 
         for comment in post['comments']:
             __collect_part_of_feed( comment, 'comments' )
             __collect_part_of_feed( comment, 'likes' )
-            __collect_part_of_feed( comment, 'reactions' )
 
     return posts
 

@@ -5,6 +5,7 @@ import facebook
 import requests
 import json
 import time
+import datetime
 
 keys = json.load( open('keys.json') )
 app_id = keys['app-id']
@@ -152,53 +153,20 @@ def collect_basics( fbid ):
         ## if we end up here, there wasn't anything esle to execute -> return False
         return False
 
-if __name__ == '__main__':
+def collect( fbid ):
 
-    import sys
-    import datetime
+    data = collect_basics( fbid )
 
-    collect_counter = 0
+    if data:
 
-    ii = len( sys.argv[1:] )
+        fbtype = data['meta']['type']
+        if fbtype in ['page', 'group', 'event', 'user']:
+            data['feed'] = collect_feed( fbid )
 
-    for i, filename in enumerate( sys.argv[1:] ):
+        if fbtype in ['page', 'event']:
+            data['photos'] = collect_endpoint( fbid, 'photos' )
 
-        jj = len( open(filename).readlines() )
+        if fbtype == 'group':
+            data['members'] = collect_endpoint( fbid, 'members')
 
-        for j, url in enumerate( open(filename) ):
-
-            print "File", (i+1), "of", ii, "entry", (j+1), "of", jj
-
-            url = url.strip()
-            fbid = url.split('?')[0]
-            fbid = fbid.split('.com/')[1]
-            ## remove list of bad terms
-            for s in ['groups/']:
-                fbid = fbid.replace(s, '')
-            fbid = fbid.replace('/', '')
-
-            ## data collection starts here
-
-            data = collect_basics( fbid )
-
-            if data:
-
-                fbtype = data['meta']['type']
-                if fbtype in ['page', 'group', 'event', 'user']:
-                    data['feed'] = collect_feed( fbid )
-
-                if fbtype in ['page', 'event']:
-                    data['photos'] = collect_endpoint( fbid, 'photos' )
-
-                if fbtype == 'group':
-                    data['members'] = collect_endpoint( fbid, 'members')
-
-                ## TODO: add group and page metadata collection
-
-                json.dump( data, open( 'data/data_' + data['name'].replace(' ', '_').replace('/', '_').lower() + '.json', 'w' ), sort_keys=True, indent=4 )
-
-                collect_counter += 1
-
-                if collect_counter % 50 == 0:
-                    print "Sleeping: Time to relax"
-                    time.sleep( 60 * 60 ) ## relax loading speed
+    return data

@@ -1,5 +1,5 @@
 import sys
-sys.path.insert( 0, '/Users/mnelimar/code/facebook-sdk/' ) ## temporary hack to use newer version of SDK
+sys.path.insert( 0, '../../facebook-sdk/' ) ## temporary hack to use newer version of SDK
 
 import facebook
 import requests

@@ -1,3 +1,5 @@
+# -*- coding: utf8
+
 import sys
 sys.path.insert( 0, '../../facebook-sdk/' ) ## temporary hack to use newer version of SDK
 
@@ -19,17 +21,17 @@ log = open('error.log', 'w')
 
 def handle_fb_errors( e , redo ):
 
-    log.write( str(e) + '\n' )
+    log.write( e.message.encode('utf8') + '\n' )
 
     if e.code in [4, 17, 341]: ## application limit errors
         time.sleep( 60 * 60 ) ## one hour
         print "Sleeping: API says no"
         redo()
     else:
-        print "Error", e
+        print "Error", e.message.encode('utf8')
 
 ## XXX: TODO: fix this mess
-___scale = '30'
+___scale = '15'
 __commentfields = [
     'id',
     'from',

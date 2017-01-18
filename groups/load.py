@@ -16,32 +16,41 @@ for i, filename in enumerate( sys.argv[1:] ):
 
     for j, entry in enumerate( csv.DictReader( open( filename ) ) ):
 
-        print entry
+        try:
 
-        print "File", (i+1), "of", ii, "entry", (j+1), "of", jj
+            print entry
 
-        if 'id' in entry:
-            fbid = entry['id']
+            print "File", (i+1), "of", ii, "entry", (j+1), "of", jj
 
-        else:
-            url = entry['url']
+            if 'id' in entry:
+                fbid = entry['id']
 
-            url = url.strip()
-            fbid = url.split('?')[0]
-            fbid = fbid.split('.com/')[1]
-            ## remove list of bad terms
-            for s in ['groups/', 'pages/']:
-                fbid = fbid.replace(s, '')
-            fbid = fbid.replace('/', '')
+            else:
+                url = entry['url']
 
-        data = collect( fbid )
+                url = url.strip()
+                fbid = url.split('?')[0]
+                fbid = fbid.split('.com/')[1]
+                ## remove list of bad terms
+                for s in ['groups/', 'pages/']:
+                    fbid = fbid.replace(s, '')
+                fbid = fbid.replace('/', '')
 
-        if data:
+            data = collect( fbid )
 
-            json.dump( data, open( 'data/data_' + entry['type'] + '_' + basefile + '_' + data['name'].replace(' ', '_').replace('/', '_').lower() + '.json', 'w' ), sort_keys=True, indent=4 )
+            if data:
 
-            collect_counter += 1
+                json.dump( data, open( 'data/data_' + entry['type'] + '_' + basefile + '_' + data['name'].replace(' ', '_').replace('/', '_').lower() + '.json', 'w' ), sort_keys=True, indent=4 )
 
-            if collect_counter % 50 == 0:
-                print "Sleeping: Time to relax"
-                time.sleep( 60 * 60 ) ## relax loading speed
+                collect_counter += 1
+
+                if collect_counter % 50 == 0:
+                    print "Sleeping: Time to relax"
+                    time.sleep( 60 * 60 ) ## relax loading speed
+
+        except:
+
+            if 'url' in entry:
+                open('error.log', 'a').write('Failed ' + entry['url'] + '\n' )
+            else:
+                open('error.log', 'a').write('Failed ' + entry['id'] + '\n' )

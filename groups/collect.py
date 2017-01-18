@@ -31,7 +31,7 @@ def handle_fb_errors( e , redo ):
         print "Error", e.message.encode('utf8')
 
 ## XXX: TODO: fix this mess
-___scale = '15'
+___scale = '50'
 __commentfields = [
     'id',
     'from',

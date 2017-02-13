@@ -17,7 +17,8 @@ __DEV__ = False ## True ## Flag to test if we're running a development thing => 
 
 graph = facebook.GraphAPI(access_token= app_id + '|' + app_secret, version='2.7')
 
-log = open('error.log', 'a')
+now = datetime.datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
+log = open('error_' + now + '.log', 'a')
 
 def handle_fb_errors( e , redo ):
 

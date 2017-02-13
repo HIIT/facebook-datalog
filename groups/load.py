@@ -48,9 +48,9 @@ for i, filename in enumerate( sys.argv[1:] ):
                     print "Sleeping: Time to relax"
                     time.sleep( 60 * 60 ) ## relax loading speed
 
-        except:
-
+        except Exception, e:
+            
             if 'url' in entry:
-                open('error.log', 'a').write('Failed ' + entry['url'] + '\n' )
+                handle_fb_errors( entry['url'], e, lambda x: pass )
             else:
-                open('error.log', 'a').write('Failed ' + entry['id'] + '\n' )
+                handle_fb_errors( entry['id'], e, lambda x: pass )

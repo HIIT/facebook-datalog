@@ -20,16 +20,17 @@ graph = facebook.GraphAPI(access_token= app_id + '|' + app_secret, version='2.7'
 now = datetime.datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
 log = open('error_' + now + '.log', 'a')
 
-def handle_fb_errors( e , redo ):
+def handle_fb_errors( fbid, e , redo ):
 
-    log.write( e.message.encode('utf8') + '\n' )
+    log.write( fbid + ': ' + e.message.encode('utf8') + '\n' )
 
-    if e.code in [4, 17, 341]: ## application limit errors
+    if 'code' in e and e.code in [4, 17, 341]: ## application limit errors
         time.sleep( 60 * 60 ) ## one hour
         print "Sleeping: API says no"
         redo()
     else:
-        print "Error", e.message.encode('utf8')
+        print "Site:", fbid
+        print "\t", e.message.encode('utf8')
 
 ## XXX: TODO: fix this mess
 ___scale = '50'
@@ -128,7 +129,7 @@ def collect_endpoint( fbid, endpoint, fields = None ):
         return ret
 
     except facebook.GraphAPIError as e:
-        handle_fb_errors( e , lambda:  collect_endpoint( fbid, endpoint ) )
+        handle_fb_errors( fbid, e , lambda:  collect_endpoint( fbid, endpoint ) )
 
 
 def collect_basics( fbid ):
@@ -152,7 +153,7 @@ def collect_basics( fbid ):
         return data
 
     except facebook.GraphAPIError as e:
-        handle_fb_errors( e , lambda: collect_basics( fbid ) )
+        handle_fb_errors( fbid, e , lambda: collect_basics( fbid ) )
         ## if we end up here, there wasn't anything esle to execute -> return False
         return False
 

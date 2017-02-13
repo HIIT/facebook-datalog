@@ -10,7 +10,7 @@ ii = len( sys.argv[1:] )
 
 for i, filename in enumerate( sys.argv[1:] ):
 
-    jj = len( open( filename ).readlines() )
+    jj = len( open( filename ).readlines() ) - 1 ## remove the header row
 
     basefile = basename( filename )
 

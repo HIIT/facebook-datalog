@@ -2,6 +2,8 @@ import sys
 from os.path import basename
 import csv
 
+import urlparse
+
 from collect import *
 
 collect_counter = 0
@@ -25,14 +27,10 @@ for i, filename in enumerate( sys.argv[1:] ):
 
             else:
 
-                url = entry['url']
-                fbid = url.strip()
-                fbid = url.split('?')[0]
-
-                if 'groups' in fbid:
-                    fbid = fbid.split('.com/')[1]
-                    fbid = fbid.split('/')[1]
-                    fbid = fbid.replace('/', '')
+                url = entry['url'].strip()
+                url = urlparse.urlparse( url ).path
+                print url
+                fbid = url.split('/')[-1]
 
             data = collect( fbid )
 

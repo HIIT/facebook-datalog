@@ -18,23 +18,21 @@ for i, filename in enumerate( sys.argv[1:] ):
 
         try:
 
-            print entry
-
             print "File", (i+1), "of", ii, "entry", (j+1), "of", jj
 
             if 'id' in entry:
                 fbid = entry['id']
 
             else:
-                url = entry['url']
 
-                url = url.strip()
+                url = entry['url']
+                fbid = url.strip()
                 fbid = url.split('?')[0]
-                fbid = fbid.split('.com/')[1]
-                ## remove list of bad terms
-                for s in ['groups/', 'pages/']:
-                    fbid = fbid.replace(s, '')
-                fbid = fbid.replace('/', '')
+
+                if 'groups' in fbid:
+                    fbid = fbid.split('.com/')[1]
+                    fbid = fbid.split('/')[1]
+                    fbid = fbid.replace('/', '')
 
             data = collect( fbid )
 

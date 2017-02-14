@@ -136,7 +136,8 @@ def collect_basics( fbid ):
 
     try:
 
-        fbobject = graph.get_object(id= fbid, fields='id,name', metadata = '1')
+        print fbid
+        fbobject = graph.get_object(id = fbid, fields = 'id,name', metadata = '1')
         fbid = fbobject['id']
         fbtype = fbobject['metadata']['type']
 
@@ -159,11 +160,15 @@ def collect_basics( fbid ):
 
 def collect( fbid ):
 
-    data = collect_basics( fbid )
+    data = graph.get_object(id = fbid, fields = 'id')
+    fbid = data['id']
 
     if data:
 
+        data = collect_basics( fbid )
+
         fbtype = data['meta']['type']
+
         if fbtype in ['page', 'group', 'event', 'user']:
             data['feed'] = collect_feed( fbid )
 

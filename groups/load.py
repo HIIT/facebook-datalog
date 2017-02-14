@@ -40,7 +40,7 @@ for i, filename in enumerate( sys.argv[1:] ):
 
             if data:
 
-                json.dump( data, open( 'data/data_' + entry['type'] + '_' + basefile + '_' + data['name'].replace(' ', '_').replace('/', '_').lower() + '.json', 'w' ), sort_keys=True, indent=4 )
+                json.dump( data, open( 'data/data_' + entry['type'] + '_' + basefile + '_' + data['name'].replace(' ', '_').replace('/', '_').lower() + '.json', 'w' ) )
 
                 collect_counter += 1
 

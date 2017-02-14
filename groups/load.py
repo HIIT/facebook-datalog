@@ -49,8 +49,11 @@ for i, filename in enumerate( sys.argv[1:] ):
                     time.sleep( 60 * 60 ) ## relax loading speed
 
         except Exception, e:
-            
+
+            def do_nothing():
+                pass
+
             if 'url' in entry:
-                handle_fb_errors( entry['url'], e, lambda x: pass )
+                handle_fb_errors( entry['url'], e, do_nothing )
             else:
-                handle_fb_errors( entry['id'], e, lambda x: pass )
+                handle_fb_errors( entry['id'], e, do_nothing )

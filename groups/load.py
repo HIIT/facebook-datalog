@@ -6,6 +6,10 @@ import urlparse
 
 from collect import *
 
+def strip_non_ascii(string):
+    stripped = (c for c in string if 0 < ord(c) < 127)
+    return ''.join(stripped)
+
 collect_counter = 0
 
 ii = len( sys.argv[1:] )
@@ -36,7 +40,9 @@ for i, filename in enumerate( sys.argv[1:] ):
 
             if data:
 
-                json.dump( data, open( 'data/data_' + entry['type'] + '_' + basefile + '_' + data['name'].replace(' ', '_').replace('/', '_').lower() + '.json', 'w' ) )
+                name = strip_non_ascii( data['name'].replace(' ', '_').replace('/', '_').lower() )
+
+                json.dump( data, open( 'data/' + data['meta']['type']  + '_' + entry['type'] + '_' + basefile + '_' + name + '.json', 'w' ) )
 
                 collect_counter += 1
 

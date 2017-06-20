@@ -1,6 +1,6 @@
-### Data collection for Facebook pages, groups and events
+# Data collection for Facebook pages, groups and events
 
-**Kindly use the GitHub issues for questions, bug information and so on.**
+*Kindly use the GitHub issues for bugs and questions.*
 
 More instructions to be written...
 

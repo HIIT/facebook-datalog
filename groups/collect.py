@@ -15,7 +15,7 @@ app_secret = keys['app-secret']
 
 __DEV__ = False ## True ## Flag to test if we're running a development thing => limit the amount of data collected from feeds
 
-graph = facebook.GraphAPI(access_token= app_id + '|' + app_secret, version='2.7')
+graph = facebook.GraphAPI(access_token= app_id + '|' + app_secret, version='2.8')
 
 now = datetime.datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
 log = open('error_' + now + '.log', 'a')
@@ -75,18 +75,24 @@ __postfields = ','.join( __postfields )
 
 def __collect_part_of_feed( post, field ):
 
+    print post, field
+
     if field not in post: ## no comments on this post, just add the field
         post[ field ] = []
 
-    elif 'next' in post[ field ]['paging']: ## there is more data to collect!
+    elif 'paging' in post[ field ] and 'next' in post[ field ]['paging']: ## there is more data to collect!
 
         if field == 'comments':
             post[ field ] = collect_endpoint( post['id'], field, __commentfields )
         else:
             post[ field ] = collect_endpoint( post['id'], field )
 
-    else:
+    elif 'data' in post[field]:
         post[ field ] = post[ field ]['data'] ## remove pagination information
+
+    else:
+        pass
+
 
 def collect_feed( fbid ):
 
@@ -107,6 +113,8 @@ def collect_feed( fbid ):
     ## also checks that data has fields defined and sets them as empty list if there is no such field
     for post in posts:
 
+        post['comments'] = [] ## initialize as an empty array
+
         __collect_part_of_feed( post, 'comments' )
         __collect_part_of_feed( post, 'likes' )
         __collect_part_of_feed( post, 'reactions' )
@@ -121,42 +129,29 @@ def collect_feed( fbid ):
 def collect_endpoint( fbid, endpoint, fields = None ):
     ret = []
 
-    try:
-        d = graph.get_all_connections( id = fbid , connection_name=endpoint, fields = fields )
-        for _d in d:
-            ret.append( _d )
+    d = graph.get_all_connections( id = fbid , connection_name=endpoint, fields = fields )
+    for _d in d:
+        ret.append( _d )
 
-        return ret
-
-    except facebook.GraphAPIError as e:
-        handle_fb_errors( fbid, e , lambda:  collect_endpoint( fbid, endpoint ) )
-
+    return ret
 
 def collect_basics( fbid ):
 
-    try:
+    fbobject = graph.get_object(id = fbid, fields = 'id,name', metadata = '1')
+    fbid = fbobject['id']
+    fbtype = fbobject['metadata']['type']
 
-        print fbid
-        fbobject = graph.get_object(id = fbid, fields = 'id,name', metadata = '1')
-        fbid = fbobject['id']
-        fbtype = fbobject['metadata']['type']
+    data = {}
 
-        data = {}
+    data['name'] = fbobject['name']
+    data['id'] = fbid
+    data['meta'] = {}
+    data['meta']['type'] = fbtype
+    ## data['meta']['url'] = url         ## todo: store url as well
+    ## data['meta']['input_file'] = f
+    data['meta']['collection_time'] = str( datetime.datetime.now() ) ## when data was collected
 
-        data['name'] = fbobject['name']
-        data['id'] = fbid
-        data['meta'] = {}
-        data['meta']['type'] = fbtype
-        ## data['meta']['url'] = url         ## todo: store url as well
-        ## data['meta']['input_file'] = f
-        data['meta']['collection_time'] = str( datetime.datetime.now() ) ## when data was collected
-
-        return data
-
-    except facebook.GraphAPIError as e:
-        handle_fb_errors( fbid, e , lambda: collect_basics( fbid ) )
-        ## if we end up here, there wasn't anything esle to execute -> return False
-        return False
+    return data
 
 def collect( fbid ):
 

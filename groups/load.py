@@ -18,38 +18,24 @@ for i, filename in enumerate( sys.argv[1:] ):
 
     for j, entry in enumerate( csv.DictReader( open( filename ) ) ):
 
-        try:
+        print "File", (i+1), "of", ii, "entry", (j+1), "of", jj
 
-            print "File", (i+1), "of", ii, "entry", (j+1), "of", jj
+        if 'id' in entry:
+            fbid = entry['id']
 
-            if 'id' in entry:
-                fbid = entry['id']
+        else:
+            url = entry['url'].strip()
+            url = urlparse.urlparse( url ).path
+            fbid = url.split('/')[-1]
 
-            else:
+        data = collect( fbid )
 
-                url = entry['url'].strip()
-                url = urlparse.urlparse( url ).path
-                print url
-                fbid = url.split('/')[-1]
+        if data:
 
-            data = collect( fbid )
+            json.dump( data, open( 'data/data_' + entry['type'] + '_' + basefile + '_' + data['name'].replace(' ', '_').replace('/', '_').lower() + '.json', 'w' ) )
 
-            if data:
+            collect_counter += 1
 
-                json.dump( data, open( 'data/data_' + entry['type'] + '_' + basefile + '_' + data['name'].replace(' ', '_').replace('/', '_').lower() + '.json', 'w' ) )
-
-                collect_counter += 1
-
-                if collect_counter % 50 == 0:
-                    print "Sleeping: Time to relax"
-                    time.sleep( 60 * 60 ) ## relax loading speed
-
-        except Exception, e:
-
-            def do_nothing():
-                pass
-
-            if 'url' in entry:
-                handle_fb_errors( entry['url'], e, do_nothing )
-            else:
-                handle_fb_errors( entry['id'], e, do_nothing )
+            if collect_counter % 50 == 0:
+                print "Sleeping: Time to relax"
+                time.sleep( 60 * 60 ) ## relax loading speed

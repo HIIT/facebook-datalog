@@ -90,11 +90,7 @@ def __collect_part_of_feed( post, field ):
     elif 'data' in post[field]:
         post[ field ] = post[ field ]['data'] ## remove pagination information
 
-    else:
-        pass
-
-
-def collect_feed( fbid ):
+def collect_feed( fbid, since = '' ):
 
     ## collect posts
     data = {}
@@ -107,7 +103,10 @@ def collect_feed( fbid ):
         posts = posts['data']
 
     else:
-        posts = collect_endpoint( fbid , 'feed', fields = __postfields )
+        posts = collect_endpoint( fbid , 'feed', fields = __postfields, since = since )
+
+
+        print len( posts )
 
     ## check which posts have so many comments that we need to continue loading data from those
     ## also checks that data has fields defined and sets them as empty list if there is no such field
@@ -126,12 +125,18 @@ def collect_feed( fbid ):
 
     return posts
 
-def collect_endpoint( fbid, endpoint, fields = None ):
+def collect_endpoint( fbid, endpoint, fields = None, since = '' ):
     ret = []
 
-    d = graph.get_all_connections( id = fbid , connection_name=endpoint, fields = fields )
-    for _d in d:
-        ret.append( _d )
+    try:
+        d = graph.get_all_connections( id = fbid , connection_name=endpoint, fields = fields, since = since )
+        for _d in d:
+            ret.append( _d )
+
+        return ret
+
+    except facebook.GraphAPIError as e:
+        handle_fb_errors( fbid, e , lambda:  collect_endpoint( fbid, endpoint ) )
 
     return ret
 
@@ -153,7 +158,7 @@ def collect_basics( fbid ):
 
     return data
 
-def collect( fbid ):
+def collect( fbid, previous_data = None ):
 
     data = graph.get_object(id = fbid, fields = 'id')
     fbid = data['id']
@@ -165,12 +170,25 @@ def collect( fbid ):
         fbtype = data['meta']['type']
 
         if fbtype in ['page', 'group', 'event', 'user']:
-            data['feed'] = collect_feed( fbid )
+            prev = []
+            since = ''
+            if previous_data:
+               prev = previous_data['feed']
+               since = max( map( lambda x: x['created_time'][:-5] , prev ) )
+               print 'since', since
+            data['feed'] = prev + collect_feed( fbid, since )
 
         if fbtype in ['page', 'event']:
-            data['photos'] = collect_endpoint( fbid, 'photos' )
+            prev = []
+            since = ''
+            if previous_data:
+               prev = previous_data['photos']
+               since = max( map( lambda x: x['created_time'][:-5] , prev ) )
+               print 'since', since
+            data['photos'] = prev + collect_endpoint( fbid, 'photos', since )
 
         if fbtype == 'group':
+            ## always rewire
             data['members'] = collect_endpoint( fbid, 'members')
 
     return data

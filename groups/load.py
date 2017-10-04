@@ -6,6 +6,10 @@ import urlparse
 
 from collect import *
 
+def strip_non_ascii(string):
+    stripped = (c for c in string if 0 < ord(c) < 127)
+    return ''.join(stripped)
+
 collect_counter = 0
 
 ii = len( sys.argv[1:] )
@@ -18,24 +22,44 @@ for i, filename in enumerate( sys.argv[1:] ):
 
     for j, entry in enumerate( csv.DictReader( open( filename ) ) ):
 
-        print "File", (i+1), "of", ii, "entry", (j+1), "of", jj
+        try:
+            
+            print "File", (i+1), "of", ii, "entry", (j+1), "of", jj
 
-        if 'id' in entry:
-            fbid = entry['id']
+            if 'id' in entry:
+                fbid = entry['id']
 
-        else:
-            url = entry['url'].strip()
-            url = urlparse.urlparse( url ).path
-            fbid = url.split('/')[-1]
+            else:
+                url = entry['url'].strip()
+                url = urlparse.urlparse( url ).path
+                fbid = url.split('/')[-1]
 
-        data = collect( fbid )
 
-        if data:
 
-            json.dump( data, open( 'data/data_' + entry['type'] + '_' + basefile + '_' + data['name'].replace(' ', '_').replace('/', '_').lower() + '.json', 'w' ) )
+            data = collect( fbid )
 
-            collect_counter += 1
+            if data:
 
-            if collect_counter % 50 == 0:
-                print "Sleeping: Time to relax"
-                time.sleep( 60 * 60 ) ## relax loading speed
+                json.dump( data, open( 'data/data_' + entry['type'] + '_' + basefile + '_' + data['name'].replace(' ', '_').replace('/', '_').lower() + '.json', 'w' ) )
+
+                collect_counter += 1
+
+                    name = strip_non_ascii( data['name'].replace(' ', '_').replace('/', '_').lower() )
+
+                    json.dump( data, open( 'data/' + data['meta']['type']  + '_' + entry['type'] + '_' + basefile + '_' + name + '.json', 'w' ) )
+
+                    collect_counter += 1
+
+                    if collect_counter % 50 == 0:
+                        print "Sleeping: Time to relax"
+                        time.sleep( 60 * 60 ) ## relax loading speed
+
+        except Exception, e:
+
+            def do_nothing():
+                pass
+
+            if 'url' in entry:
+                handle_fb_errors( entry['url'], e, do_nothing )
+            else:
+                handle_fb_errors( entry['id'], e, do_nothing )

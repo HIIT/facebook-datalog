@@ -15,7 +15,7 @@ app_secret = keys['app-secret']
 
 __DEV__ = False ## True ## Flag to test if we're running a development thing => limit the amount of data collected from feeds
 
-graph = facebook.GraphAPI(access_token= app_id + '|' + app_secret, version='2.8')
+graph = facebook.GraphAPI(access_token= app_id + '|' + app_secret, version="2.12")
 
 now = datetime.datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
 log = open('error_' + now + '.log', 'a')
@@ -33,7 +33,7 @@ def handle_fb_errors( fbid, e , redo ):
         print "\t", e.message.encode('utf8')
 
 ## XXX: TODO: fix this mess
-___scale = '50'
+___scale = '10'
 __commentfields = [
     'id',
     'from',
@@ -72,6 +72,8 @@ __postfields = [
 ]
 
 __postfields = ','.join( __postfields )
+
+print __postfields
 
 def __collect_part_of_feed( post, field ):
 
@@ -192,3 +194,10 @@ def collect( fbid, previous_data = None ):
             data['members'] = collect_endpoint( fbid, 'members')
 
     return data
+
+
+if __name__ == '__main__':
+
+    print facebook.__version__
+
+    collect( '1363895887007159' )
